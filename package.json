@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "android": "expo start --android",
+    "postinstall": "patch-package",
     "ios": "expo start --ios",
     "start": "expo start",
     "prebuild": "expo prebuild",
@@ -15,6 +16,8 @@
     "expo-status-bar": "~2.2.3",
     "nativewind": "latest",
     "package-patcher": "^0.0.2",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "react": "19.0.0",
     "react-native": "0.79.4",
     "react-native-reanimated": "~3.17.4",
