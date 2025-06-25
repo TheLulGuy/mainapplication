@@ -15,14 +15,16 @@
     "expo": "^53.0.12",
     "expo-status-bar": "~2.2.3",
     "nativewind": "latest",
+<<<<<<< HEAD
     "package-patcher": "^0.0.2",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
+=======
+>>>>>>> parent of d0429ae (first commit)
     "react": "19.0.0",
     "react-native": "0.79.4",
     "react-native-reanimated": "~3.17.4",
-    "react-native-safe-area-context": "5.4.0",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-safe-area-context": "5.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
