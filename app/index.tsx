@@ -1,8 +1,8 @@
-import CustomButton from "@/components/CustomButton";
+import CustomButton from "../components/CustomButton";
 import { router } from "expo-router";
 import React from "react";
 import { Text, View } from "react-native";
-import '@/global.css'
+import '../global.css'
 export default function Index() {
   return (
     <View

@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import CustomNavBar from "@/components/CustomNavBar";
+import CustomNavBar from "../../components/CustomNavBar";
 
 export default function _layout() {
   return (
