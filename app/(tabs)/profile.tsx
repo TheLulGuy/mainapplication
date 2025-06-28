@@ -1,56 +1,9 @@
-// import { ScrollView, StyleSheet, Text, View, Image} from 'react-native'
-// import React from 'react'
-// import { heightPercentageToDP as hp, widthPercentageToDP as wp} from 'react-native-responsive-screen'
-// import { useNavigation } from '@react-navigation/native';
-// import { profileData } from 'constants';
-
-// const Profile = () => {
-//   const data = profileData[0];
-//   return (
-//     // <View className='flex-1 items-center justify-center'>
-//     //   <Text className='text-3xl'>Profile</Text>
-//     // </View>
-//     <ScrollView
-//     className='relative bg-white flex-1'
-//     contentContainerStyle={{
-//       paddingBottom: hp(5),
-
-//     }}
-//     >
-//       <View>
-//         <Image 
-//         source={data.imgUrl}
-//         style={{
-//           width: wp(100),
-//           height: hp(60),
-//           borderBottomLeftRadius: 30,
-//           borderBottomRightRadius: 30,
-//         }}
-//         />
-//       </View>
-      
-//       <View className='w-full absolute flex-row items-center justify-end pt-10'>
-//         <View className='p-2 rounded-full bg-black/40 mr-5 justify-between'>
-//           {/* <CameraIcon/ */}
-//         </View>
-//       </View>
-
-//     </ScrollView>
-//   )
-// }
-
-// export default Profile
-
-// const styles = StyleSheet.create({})
-
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import React from "react";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
-// import { CameraIcon } from "react-native-heroicons/outline";
-// import { BeakerIcon } from '@heroicons/react/24/solid';
 import { profileData } from "../../constants";
 
 export default function ProfileScreen() {
@@ -59,11 +12,11 @@ export default function ProfileScreen() {
     <ScrollView
       className="relative bg-white flex-1"
       contentContainerStyle={{
-        paddingBottom: hp(5),
+        paddingBottom: hp(12),
       }}
     >
       {/* Image */}
-      <View>
+      <View className="mb-2">
         <Image
           source={data.imgUrl}
           style={{
@@ -76,32 +29,32 @@ export default function ProfileScreen() {
       </View>
 
       {/* Header */}
-      <View className="w-full absolute flex-row justify-end items-center pt-10">
-        <View className="p-2 rounded-full bg-black/40 mr-5 justify-center items-center">
+      <View className="w-full absolute flex-row justify-end items-center pt-12 px-5">
+        <View className="p-3 rounded-full bg-black/40">
           {/* <BeakerIcon size={hp(3.5)} color="white" strokeWidth={1.5} /> */}
         </View>
       </View>
 
       {/* Bio */}
-      <View className="w-full justify-start items-start px-6 space-y-4 mt-6">
+      <View className="w-full justify-start items-start px-6 space-y-6 mt-8">
         {/* User name and age */}
-        <View className="flex-row space-x-2 justify-between w-full items-center">
-          <View className="flex-row ">
-            <Text className="text-black text-center font-bold text-xl">
+        <View className="flex-row space-x-2 justify-between w-full items-center mb-4">
+          <View className="flex-row space-x-1">
+            <Text className="text-black text-center font-bold text-2xl">
               {data.name}
-              {", "}
+              {" "}
             </Text>
-            <Text className="text-black text-center font-bold text-xl ">
+            <Text className="text-black text-center font-bold text-2xl ">
               {data.age}
             </Text>
           </View>
 
-          <Text>Edit</Text>
+          <Text className="text-blue-500 text-lg">Edit</Text>
         </View>
 
         {/* User hobbies */}
-        <View>
-          <View className="flex-row">
+        <View className="mb-6">
+          <View className="flex-row flex-wrap gap-2">
             {data.hobbies?.map((hobby, index) => (
               <View
                 key={index}
@@ -111,7 +64,7 @@ export default function ProfileScreen() {
                   paddingHorizontal: 10,
                   marginRight: 5,
                 }}
-                className="bg-[#d3d3d3]"
+                className="bg-[#d3d3d3] rounded-full px-4 py-2"
               >
                 <Text className="text-black ">{hobby}</Text>
               </View>
@@ -120,12 +73,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* User Bio */}
-        <View>
-          <Text className="uppercase font-semibold text-neutral-500 tracking-wider mb-2 ">
+        <View className="space-y-3">
+          <Text className="uppercase font-semibold text-neutral-500 text-lg tracking-wider mb-2">
             BIO
           </Text>
 
-          <Text className="text-black/80 text-left font-medium text-sm">
+          <Text className="text-black/80 text-base leading-6 text-justify">
             {data.bio}
           </Text>
         </View>
