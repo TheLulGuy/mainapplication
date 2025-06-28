@@ -80,17 +80,17 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
 
   function getIconByRouteName(routeName: string, color: string) {
     switch (routeName) {
-      case "index":
+      case "Index":
         return <Feather name="home" size={18} color={color} />;
-      case "search":
+      case "Search":
         return <AntDesign name="search1" size={18} color={color} />;
-      case "analytics":
+      case "Analytics":
         return <Feather name="pie-chart" size={18} color={color} />;
-      case "wallet":
+      case "Wallet":
         return <Ionicons name="wallet-outline" size={18} color={color} />;
-      case "messages":
+      case "Messages":
         return <Feather name="message-circle" size={18} color={color} />;
-      case "profile":
+      case "Profile":
         return <FontAwesome6 name="circle-user" size={18} color={color} />;
       default:
         return <Feather name="home" size={18} color={color} />;
