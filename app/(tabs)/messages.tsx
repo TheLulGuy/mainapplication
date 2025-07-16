@@ -46,7 +46,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chat, name, imgUrl, onBack }) =
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white pt-10"
+      className="flex-1 bg-white pt-10 pb-20"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={80}
     >
