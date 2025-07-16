@@ -1,45 +1,36 @@
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import Feather from "@expo/vector-icons/Feather";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Animated, {
-  FadeIn,
-  FadeOut,
-  LinearTransition,
-} from "react-native-reanimated";
-import React = require("react");
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import Feather from '@expo/vector-icons/Feather';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import React = require('react');
 
-const AnimatedTouchableOpacity =
-  Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-const PRIMARY_COLOR = "#130057";
-const SECONDARY_COLOR = "#fff";
+const PRIMARY_COLOR = '#130057';
+const SECONDARY_COLOR = '#fff';
 
-const CustomNavBar: React.FC<BottomTabBarProps> = ({
-  state,
-  descriptors,
-  navigation,
-}) => {
+const CustomNavBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   return (
     <View style={styles.container}>
       {state.routes.map((route, index) => {
-        if (["_sitemap", "+not-found"].includes(route.name)) return null;
+        if (['_sitemap', '+not-found'].includes(route.name)) return null;
 
         const { options } = descriptors[route.key];
         const label =
           options.tabBarLabel !== undefined
             ? options.tabBarLabel
             : options.title !== undefined
-            ? options.title
-            : route.name;
+              ? options.title
+              : route.name;
 
         const isFocused = state.index === index;
 
         const onPress = () => {
           const event = navigation.emit({
-            type: "tabPress",
+            type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
@@ -56,19 +47,14 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
             onPress={onPress}
             style={[
               styles.tabItem,
-              { backgroundColor: isFocused ? SECONDARY_COLOR : "transparent" },
-            ]}
-          >
-            {getIconByRouteName(
-              route.name,
-              isFocused ? PRIMARY_COLOR : SECONDARY_COLOR
-            )}
+              { backgroundColor: isFocused ? SECONDARY_COLOR : 'transparent' },
+            ]}>
+            {getIconByRouteName(route.name, isFocused ? PRIMARY_COLOR : SECONDARY_COLOR)}
             {isFocused && (
               <Animated.Text
                 entering={FadeIn.duration(200)}
                 exiting={FadeOut.duration(200)}
-                style={styles.text}
-              >
+                style={styles.text}>
                 {label as string}
               </Animated.Text>
             )}
@@ -80,17 +66,17 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
 
   function getIconByRouteName(routeName: string, color: string) {
     switch (routeName) {
-      case "Index":
+      case 'Index':
         return <Feather name="home" size={18} color={color} />;
-      case "Search":
+      case 'Search':
         return <AntDesign name="search1" size={18} color={color} />;
-      case "Analytics":
+      case 'Analytics':
         return <Feather name="pie-chart" size={18} color={color} />;
-      case "Wallet":
+      case 'Wallet':
         return <Ionicons name="wallet-outline" size={18} color={color} />;
-      case "Messages":
+      case 'Messages':
         return <Feather name="message-circle" size={18} color={color} />;
-      case "Profile":
+      case 'Profile':
         return <FontAwesome6 name="circle-user" size={18} color={color} />;
       default:
         return <Feather name="home" size={18} color={color} />;
@@ -100,26 +86,26 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    position: 'absolute',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: PRIMARY_COLOR,
-    width: "60%",
-    alignSelf: "center",
+    width: '60%',
+    alignSelf: 'center',
     bottom: 30,
     borderRadius: 40,
     paddingHorizontal: 12,
     paddingVertical: 15,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
   tabItem: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     height: 36,
     paddingHorizontal: 13,
     borderRadius: 30,
@@ -127,7 +113,7 @@ const styles = StyleSheet.create({
   text: {
     color: PRIMARY_COLOR,
     marginLeft: 8,
-    fontWeight: "500",
+    fontWeight: '500',
   },
 });
 
