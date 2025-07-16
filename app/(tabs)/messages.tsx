@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { chatData } from '../../constants';
 
 type ChatMessage = {
@@ -29,9 +31,12 @@ type ChatScreenProps = {
 };
 
 
-const ChatScreen: React.FC<ChatScreenProps> = ({ chat, name, imgUrl, onBack }) => {
+
+const ChatScreen = ({ route, navigation }: any) => {
+  const { chat, name, imgUrl } = route.params;
   const [messages, setMessages] = useState<ChatMessage[]>(chat);
   const [input, setInput] = useState('');
+  const flatListRef = React.useRef<FlatList<ChatMessage>>(null);
 
   const handleSend = () => {
     if (input.trim() === '') return;
@@ -40,7 +45,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chat, name, imgUrl, onBack }) =
       message: input,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setMessages([...messages, newMessage]);
+    setMessages(prev => {
+      const updated = [...prev, newMessage];
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToEnd({ animated: true });
+        }
+      }, 100);
+      return updated;
+    });
     setInput('');
   };
 
@@ -51,13 +64,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chat, name, imgUrl, onBack }) =
       keyboardVerticalOffset={80}
     >
       <View className="flex-row items-center px-6 mb-6">
-        <TouchableOpacity onPress={onBack}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={28} color="#130057" />
         </TouchableOpacity>
         <Text className="text-2xl font-bold flex-1 ml-4">{name}</Text>
         <Image source={imgUrl} className="w-16 h-16 rounded-full ml-4" />
       </View>
       <FlatList
+        ref={flatListRef}
         data={messages}
         keyExtractor={(_, idx) => idx.toString()}
         renderItem={({ item }) => (
@@ -80,30 +94,20 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ chat, name, imgUrl, onBack }) =
           returnKeyType="send"
         />
         <TouchableOpacity
-          className="bg-blue-500 px-6 py-3 rounded-full"
+          className="bg-blue-500 px-6 py-3 rounded-full items-center justify-center"
           onPress={handleSend}
         >
-          <Text className="text-white text-lg font-semibold">Send</Text>
+          <Ionicons name="send" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 };
 
-const Messages: React.FC = () => {
-  const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
+const Stack = createNativeStackNavigator();
 
-  if (selectedChat) {
-    return (
-      <ChatScreen
-        chat={selectedChat.chat}
-        name={selectedChat.name}
-        imgUrl={selectedChat.imgUrl}
-        onBack={() => setSelectedChat(null)}
-      />
-    );
-  }
-
+const MessagesList: React.FC = () => {
+  const navigation = useNavigation();
   return (
     <View className="flex-1 bg-white pt-10">
       <Text className="text-4xl font-bold mb-8 text-center">Messages</Text>
@@ -112,7 +116,7 @@ const Messages: React.FC = () => {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => setSelectedChat(item)}
+            onPress={() => navigation.navigate('Chat', { chat: item.chat, name: item.name, imgUrl: item.imgUrl })}
             activeOpacity={0.7}
           >
             <View
@@ -135,6 +139,15 @@ const Messages: React.FC = () => {
         )}
       />
     </View>
+  );
+};
+
+const Messages: React.FC = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="MessagesList" component={MessagesList} options={{ headerShown: false }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+    </Stack.Navigator>
   );
 };
 
