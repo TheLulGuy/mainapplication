@@ -27,6 +27,7 @@
     "postinstall-postinstall": "^2.1.0",
     "react": "19.0.0",
     "react-native": "0.79.4",
+    "react-native-gesture-handler": "^2.27.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-responsive-screen": "^1.4.2",
     "react-native-safe-area-context": "5.4.0",
