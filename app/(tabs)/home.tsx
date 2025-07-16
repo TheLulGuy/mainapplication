@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import TinderCard from 'react-tinder-card';
 import { userData } from '../../constants';
 
-const { width: windowWidth } = Dimensions.get('window');
 
-function Advanced() {
+function Advanced () {
   const [currentIndex, setCurrentIndex] = useState(userData.length - 1);
   const [lastDirection, setLastDirection] = useState();
   const currentIndexRef = useRef(currentIndex);
@@ -56,7 +55,7 @@ function Advanced() {
       <View style={styles.cardContainer}>
         {userData.map((character, index) => (
           <View 
-            key={`${character.id}-${index}`}
+            key={character.name}
             style={[
               styles.cardWrapper,
               { zIndex: userData.length - index }
@@ -66,6 +65,7 @@ function Advanced() {
               ref={childRefs[index]}
               onSwipe={(dir) => swiped(dir, character.name, index)}
               onCardLeftScreen={() => outOfFrame(character.name, index)}
+              preventSwipe={['up', 'down']}
             >
               <View style={styles.card}>
                 <Image 
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 260,
     height: 300,
-    position: 'relative', // This is crucial
+    position: 'relative',
   },
   cardWrapper: {
     position: 'absolute',
@@ -172,7 +172,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    margin: 10,
   },
   buttons: {
     margin: 20,
