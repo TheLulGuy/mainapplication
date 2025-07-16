@@ -1,20 +1,19 @@
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
-import React from "react";
+import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React from 'react';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
-import { profileData } from "../../constants";
+} from 'react-native-responsive-screen';
+import { profileData } from '../../constants';
 
 export default function ProfileScreen() {
   const data = profileData[0];
   return (
     <ScrollView
-      className="relative bg-white flex-1"
+      className="relative flex-1 bg-white"
       contentContainerStyle={{
         paddingBottom: hp(12),
-      }}
-    >
+      }}>
       {/* Image */}
       <View className="mb-2">
         <Image
@@ -29,27 +28,22 @@ export default function ProfileScreen() {
       </View>
 
       {/* Header */}
-      <View className="w-full absolute flex-row justify-end items-center pt-12 px-5">
-        <View className="p-3 rounded-full bg-black/40">
+      <View className="absolute w-full flex-row items-center justify-end px-5 pt-12">
+        <View className="rounded-full bg-black/40 p-3">
           {/* <BeakerIcon size={hp(3.5)} color="white" strokeWidth={1.5} /> */}
         </View>
       </View>
 
       {/* Bio */}
-      <View className="w-full justify-start items-start px-6 space-y-6 mt-8">
+      <View className="mt-8 w-full items-start justify-start space-y-6 px-6">
         {/* User name and age */}
-        <View className="flex-row space-x-2 justify-between w-full items-center mb-4">
+        <View className="mb-4 w-full flex-row items-center justify-between space-x-2">
           <View className="flex-row space-x-1">
-            <Text className="text-black text-center font-bold text-2xl">
-              {data.name}
-              {" "}
-            </Text>
-            <Text className="text-black text-center font-bold text-2xl ">
-              {data.age}
-            </Text>
+            <Text className="text-center text-2xl font-bold text-black">{data.name} </Text>
+            <Text className="text-center text-2xl font-bold text-black ">{data.age}</Text>
           </View>
 
-          <Text className="text-blue-500 text-lg">Edit</Text>
+          <Text className="text-lg text-blue-500">Edit</Text>
         </View>
 
         {/* User hobbies */}
@@ -64,8 +58,7 @@ export default function ProfileScreen() {
                   paddingHorizontal: 10,
                   marginRight: 5,
                 }}
-                className="bg-[#d3d3d3] rounded-full px-4 py-2"
-              >
+                className="rounded-full bg-[#d3d3d3] px-4 py-2">
                 <Text className="text-black ">{hobby}</Text>
               </View>
             ))}
@@ -74,13 +67,11 @@ export default function ProfileScreen() {
 
         {/* User Bio */}
         <View className="space-y-3">
-          <Text className="uppercase font-semibold text-neutral-500 text-lg tracking-wider mb-2">
+          <Text className="mb-2 text-lg font-semibold uppercase tracking-wider text-neutral-500">
             BIO
           </Text>
 
-          <Text className="text-black/80 text-base leading-6 text-justify">
-            {data.bio}
-          </Text>
+          <Text className="text-justify text-base leading-6 text-black/80">{data.bio}</Text>
         </View>
 
         {/*  */}
