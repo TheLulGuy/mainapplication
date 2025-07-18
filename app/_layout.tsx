@@ -9,13 +9,13 @@ const Stack = createNativeStackNavigator();
 export default function RootLayout() {
   return (
       <Stack.Navigator>
-        {/* Index screen without tabs */}
+        {/* Index screen without tabs
         <Stack.Screen 
           name="index" 
           component={Index} 
           options={{ headerShown: false }}
         />
-        
+         */}
         {/* Main app with tabs */}
         <Stack.Screen
           name="(tabs)"
