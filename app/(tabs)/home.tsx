@@ -5,11 +5,16 @@ import { userData } from '../../constants';
 
 const { width: windowWidth } = Dimensions.get('window');
 
+// Main Tinder card component
 function Advanced() {
-  const [currentIndex, setCurrentIndex] = useState(userData.length - 1);
+  // Track the index of the current top card (starts at 0 for first card)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  // Track the last swipe direction for display
   const [lastDirection, setLastDirection] = useState();
+  // Ref to keep currentIndex in sync for async operations
   const currentIndexRef = useRef(currentIndex);
 
+  // Create refs for each card to control swipe/restore animations
   const childRefs = useMemo(
     () =>
       Array(userData.length)
@@ -18,34 +23,43 @@ function Advanced() {
     []
   );
 
+  // Update currentIndex and keep ref in sync
   const updateCurrentIndex = (val) => {
     setCurrentIndex(val);
     currentIndexRef.current = val;
   };
 
-  const canGoBack = currentIndex < userData.length - 1;
-  const canSwipe = currentIndex >= 0;
+  // Check if we can go back (if we've swiped at least one card)
+  const canGoBack = currentIndex > 0;
+  // Check if we can swipe (if there are still cards left)
+  const canSwipe = currentIndex < userData.length;
 
+  // Called when a card is swiped (either manually or by button)
   const swiped = (direction, nameToDelete, index) => {
     setLastDirection(direction);
-    updateCurrentIndex(index - 1);
+    // Move to the next card (increment index)
+    updateCurrentIndex(currentIndex + 1);
   };
 
+  // Called when a card animation finishes and leaves the screen
   const outOfFrame = (name, idx) => {
     console.log(`${name} (${idx}) left the screen!`, currentIndexRef.current);
-    currentIndexRef.current >= idx && childRefs[idx].current.restoreCard();
   };
 
+  // Programmatically trigger swipe animation (keeps existing animation)
   const swipe = async (dir) => {
     if (canSwipe && currentIndex < userData.length) {
+      // Trigger the swipe animation on the current top card
       await childRefs[currentIndex].current.swipe(dir);
     }
   };
 
+  // Undo the last swipe (restore previous card)
   const goBack = async () => {
     if (!canGoBack) return;
-    const newIndex = currentIndex + 1;
+    const newIndex = currentIndex - 1;
     updateCurrentIndex(newIndex);
+    // Restore the card that was previously swiped
     await childRefs[newIndex].current.restoreCard();
   };
 
@@ -53,32 +67,37 @@ function Advanced() {
     <View style={styles.container}>
       <Text style={styles.header}>React Tinder Card</Text>
       
+      {/* Card stack: only show cards from currentIndex onward */}
       <View style={styles.cardContainer}>
         {userData.map((character, index) => (
-          <View 
-            key={`${character.id}-${index}`}
-            style={[
-              styles.cardWrapper,
-              { zIndex: userData.length - index }
-            ]}
-          >
-            <TinderCard
-              ref={childRefs[index]}
-              onSwipe={(dir) => swiped(dir, character.name, index)}
-              onCardLeftScreen={() => outOfFrame(character.name, index)}
+          // Only render cards that haven't been swiped yet
+          index >= currentIndex && (
+            <View 
+              key={`${character.id}-${index}`}
+              style={[
+                styles.cardWrapper,
+                // Stack cards with proper z-index (top card has highest z-index)
+                { zIndex: userData.length - index }
+              ]}
             >
-              <View style={styles.card}>
-                <Image 
-                  source={character.imgPath} 
-                  style={styles.cardImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.cardFooter}>
-                  <Text style={styles.cardTitle}>{character.name}</Text>
+              <TinderCard
+                ref={childRefs[index]}
+                onSwipe={(dir) => swiped(dir, character.name, index)}
+                onCardLeftScreen={() => outOfFrame(character.name, index)}
+              >
+                <View style={styles.card}>
+                  <Image 
+                    source={character.imgPath} 
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.cardFooter}>
+                    <Text style={styles.cardTitle}>{character.name}</Text>
+                  </View>
                 </View>
-              </View>
-            </TinderCard>
-          </View>
+              </TinderCard>
+            </View>
+          )
         ))}
       </View>
 
