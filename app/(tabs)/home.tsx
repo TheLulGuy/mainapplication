@@ -23,14 +23,21 @@ function TinderCard() {
   // Array to store swiped cards for undo functionality
   const [swipedCards, setSwipedCards] = useState<any[]>([]);
   
-  // Animation values for card position and rotation
+  // Animation values for card position and rotation (only for the top card)
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+  
+  // Animation values for stack cards moving up
+  const stackAnimations = useRef([
+    new Animated.Value(0), // Card behind top card
+    new Animated.Value(0), // Card behind that
+  ]).current;
 
-  // Get current card data
+  // Get current card data and next cards for stack
   const currentCard = userData[currentIndex];
+  const nextCard = userData[currentIndex + 1];
   const hasCards = currentIndex < userData.length;
   const canUndo = swipedCards.length > 0;
 
@@ -82,7 +89,7 @@ function TinderCard() {
     // Set rotation based on direction
     const rotateValue = direction === 'right' ? 15 : -15;
 
-    // Animate card off screen
+    // Animate the top card off screen
     Animated.parallel([
       Animated.timing(translateX, {
         toValue,
@@ -99,12 +106,22 @@ function TinderCard() {
         duration: 300,
         useNativeDriver: false,
       }),
+      // Animate stack cards moving up smoothly
+      ...stackAnimations.map(anim => 
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        })
+      ),
     ]).start(() => {
       // After animation, update state and reset values
       setSwipedCards(prev => [...prev, { ...currentCard, direction }]);
       setCurrentIndex(prev => prev + 1);
       setLastDirection(direction);
       resetCardPosition();
+      // Reset stack animations for next swipe
+      stackAnimations.forEach(anim => anim.setValue(0));
     });
   };
 
@@ -157,6 +174,8 @@ function TinderCard() {
     setCurrentIndex(prev => prev - 1);
     setLastDirection('');
     resetCardPosition();
+    // Reset stack animations when undoing
+    stackAnimations.forEach(anim => anim.setValue(0));
   };
 
   // Calculate rotation interpolation for smooth rotation
@@ -184,44 +203,85 @@ function TinderCard() {
       {/* Header */}
       <Text style={styles.header}>Swipe Cards</Text>
 
-      {/* Card Container */}
+      {/* Card Container - Stack of cards */}
       <View style={styles.cardContainer}>
         {hasCards ? (
-          <Animated.View
-            {...panResponder.panHandlers}
-            style={[
-              styles.card,
-              {
-                transform: [
-                  { translateX },
-                  { translateY },
-                  { rotate: rotateInterpolate },
-                ],
-                opacity,
-              },
-            ]}
-          >
-            <Image
-              source={currentCard.imgPath}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-            
-            {/* Like overlay - shows when swiping right */}
-            <Animated.View style={[styles.overlay, styles.likeOverlay, { opacity: likeOpacity }]}>
-              <Text style={styles.overlayText}>LIKE</Text>
-            </Animated.View>
-            
-            {/* Nope overlay - shows when swiping left */}
-            <Animated.View style={[styles.overlay, styles.nopeOverlay, { opacity: nopeOpacity }]}>
-              <Text style={styles.overlayText}>NOPE</Text>
-            </Animated.View>
+          <View style={styles.cardStack}>
+            {/* Render up to 3 cards in the stack */}
+            {[...Array(Math.min(3, userData.length - currentIndex))].map((_, index) => {
+              const cardIndex = currentIndex + index;
+              const card = userData[cardIndex];
+              const isTopCard = index === 0;
+              
+              if (!card) return null;
+              
+              // Calculate smooth animations for stack cards
+              const stackProgress = index > 0 && index <= 2 ? stackAnimations[index - 1] : new Animated.Value(0);
+              
+              // Interpolate scale and position for smooth movement
+              const animatedScale = stackProgress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1 - (index * 0.05), 1 - ((index - 1) * 0.05)],
+                extrapolate: 'clamp',
+              });
+              
+              const animatedTranslateY = stackProgress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [index * 10, (index - 1) * 10],
+                extrapolate: 'clamp',
+              });
+              
+              return (
+                <Animated.View
+                  key={`${cardIndex}-${card.id}`}
+                  {...(isTopCard ? panResponder.panHandlers : {})}
+                  style={[
+                    styles.card,
+                    {
+                      position: 'absolute',
+                      zIndex: 3 - index,
+                      transform: [
+                        ...(isTopCard ? [
+                          { translateX },
+                          { translateY },
+                          { rotate: rotateInterpolate },
+                        ] : []),
+                        { scale: isTopCard ? 1 : animatedScale },
+                        { translateY: isTopCard ? 0 : animatedTranslateY },
+                      ],
+                      opacity: isTopCard ? opacity : 1,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={card.imgPath}
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                  />
+                  
+                  {/* Only show overlays on the top card */}
+                  {isTopCard && (
+                    <>
+                      {/* Like overlay - shows when swiping right */}
+                      <Animated.View style={[styles.overlay, styles.likeOverlay, { opacity: likeOpacity }]}>
+                        <Text style={styles.overlayText}>LIKE</Text>
+                      </Animated.View>
+                      
+                      {/* Nope overlay - shows when swiping left */}
+                      <Animated.View style={[styles.overlay, styles.nopeOverlay, { opacity: nopeOpacity }]}>
+                        <Text style={styles.overlayText}>NOPE</Text>
+                      </Animated.View>
+                    </>
+                  )}
 
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardName}>{currentCard.name}, {currentCard.age}</Text>
-              <Text style={styles.cardDistance}>{currentCard.distance}</Text>
-            </View>
-          </Animated.View>
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.cardName}>{card.name}, {card.age}</Text>
+                    <Text style={styles.cardDistance}>{card.distance}</Text>
+                  </View>
+                </Animated.View>
+              );
+            })}
+          </View>
         ) : (
           <View style={styles.noCardsContainer}>
             <Text style={styles.noCardsText}>No more cards!</Text>
@@ -297,6 +357,11 @@ const styles = StyleSheet.create({
     height: 500,
     marginBottom: 30,
     position: 'relative',
+  },
+  cardStack: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
   },
   card: {
     width: '100%',
