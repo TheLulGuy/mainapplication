@@ -13,7 +13,8 @@ export default function Index() {
       }}
     >
       <Text>Edit app/index.tsx to edit this screen.</Text>
-      <CustomButton title="Click me" onPress={() => router.push('/(tabs)/home')}/>
+      <CustomButton title="Go to HomePage" onPress={() => router.push('/(tabs)/home')}/>
+      <CustomButton title="Go to LoginScreen" onPress={() => router.push('/(login)/loginscreen')}/>
     </View>
   );
 }
