@@ -12,7 +12,7 @@ export default function ProfileScreen() {
     <ScrollView
       className="relative bg-white flex-1"
       contentContainerStyle={{
-        paddingBottom: hp(12),
+        paddingBottom: hp(12) + 90, // Add space for custom navigation bar
       }}
     >
       {/* Image */}

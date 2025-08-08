@@ -1,8 +1,8 @@
 // Messaging stack main file
 // Contains: MessagesList (chat overview), ChatScreen (chat window), Stack navigator
 // Uses: chatData from constants, Ionicons for icons, Native stack navigation
-import React, { useState } from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -41,12 +41,59 @@ type ChatScreenProps = {
 
 // --- ChatScreen: Individual chat window ---
 // Receives chat, name, imgUrl via navigation params
-// Handles message sending, auto-scroll, input bar
+// Handles message sending, auto-scroll, input bar with dynamic positioning
 const ChatScreen = ({ route, navigation }: any) => {
   const { chat, name, imgUrl } = route.params; // navigation params from MessagesList
   const [messages, setMessages] = useState<ChatMessage[]>(chat); // local chat state
   const [input, setInput] = useState(''); // input bar state
+  const [keyboardHeight, setKeyboardHeight] = useState(0); // keyboard height state
+  const [isInputFocused, setIsInputFocused] = useState(false); // input focus state
   const flatListRef = React.useRef<FlatList<ChatMessage>>(null); // ref for auto-scroll
+  const inputBottomPosition = useRef(new Animated.Value(70)).current; // animated bottom position (70px = above nav bar)
+  const screenHeight = Dimensions.get('window').height;
+
+  // Dynamic keyboard and focus handling
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      // When keyboard shows, move input above it with smooth animation
+      Animated.spring(inputBottomPosition, {
+        toValue: e.endCoordinates.height + 10, // 10px buffer above keyboard
+        useNativeDriver: false,
+        tension: 100,
+        friction: 8,
+      }).start();
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+      // When keyboard hides, position above navigation bar
+      Animated.spring(inputBottomPosition, {
+        toValue: 70, // Position above the 70px navigation bar
+        useNativeDriver: false,
+        tension: 100,
+        friction: 8,
+      }).start();
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [isInputFocused]);
+
+  // Handle input focus changes
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    // Don't move the input when focusing if keyboard isn't visible
+    // Let the keyboard listener handle the positioning
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    // Don't move the input when blurring if keyboard isn't visible
+    // Let the keyboard listener handle the positioning
+  };
 
   // Send message handler
   const handleSend = () => {
@@ -69,22 +116,19 @@ const ChatScreen = ({ route, navigation }: any) => {
     setInput('');
   };
 
-  // UI: header (back, name, avatar), messages list, input bar
+  // UI: header (back, name, avatar), messages list, dynamic input bar
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-white pt-10 pb-20"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
-    >
+    <View className="flex-1 bg-white pt-10">
       {/* Header: back button, chat name, avatar */}
       <View className="flex-row items-center px-6 mb-6">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color="#130057" />
+        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+          <Ionicons name="chevron-back" size={28} color="#130057" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold flex-1 ml-4">{name}</Text>
-        <Image source={imgUrl} className="w-16 h-16 rounded-full ml-4" />
+        <Text className="text-2xl font-bold flex-1">{name}</Text>
+        <Image source={imgUrl} className="w-16 h-16 rounded-full" />
       </View>
-      {/* Messages list */}
+      
+      {/* Messages list with dynamic bottom padding */}
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -98,25 +142,69 @@ const ChatScreen = ({ route, navigation }: any) => {
           </View>
         )}
         style={{ flex: 1 }}
+        contentContainerStyle={{ 
+          paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : 140 // Less padding when attached to nav
+        }}
       />
-      {/* Input bar for sending messages */}
-      <View className="flex-row items-center px-6 pb-6">
+      
+      {/* Dynamically positioned input bar */}
+      <Animated.View 
+        className="absolute left-0 right-0 flex-row items-center px-4 py-3"
+        style={{ 
+          bottom: inputBottomPosition,
+          backgroundColor: keyboardHeight > 0 ? '#ffffff' : '#f8fafc', // Slightly different color for visibility
+          borderTopWidth: 1,
+          borderTopColor: '#e5e7eb',
+          borderTopLeftRadius: keyboardHeight > 0 ? 0 : 20,
+          borderTopRightRadius: keyboardHeight > 0 ? 0 : 20,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
+          minHeight: 60, // Ensure minimum height
+          zIndex: 1000, // Ensure it's above other elements
+        }}
+      >
         <TextInput
-          className="flex-1 border border-gray-300 rounded-full px-4 py-3 text-lg mr-3 bg-gray-100"
+          className="flex-1 rounded-full px-4 py-3 text-lg mr-3"
           placeholder="Type a message..."
           value={input}
           onChangeText={setInput}
           onSubmitEditing={handleSend}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           returnKeyType="send"
+          multiline={false}
+          style={{
+            backgroundColor: keyboardHeight > 0 ? '#f3f4f6' : '#ffffff',
+            borderColor: isInputFocused ? '#3B82F6' : (keyboardHeight > 0 ? '#D1D5DB' : '#e5e7eb'),
+            borderWidth: 1,
+            color: keyboardHeight > 0 ? '#000000' : '#130057',
+            minHeight: 44, // Ensure minimum height for visibility
+          }}
+          placeholderTextColor={keyboardHeight > 0 ? '#9CA3AF' : '#6B7280'}
         />
         <TouchableOpacity
-          className="bg-blue-500 px-6 py-3 rounded-full items-center justify-center"
+          className="px-4 py-3 rounded-full items-center justify-center"
           onPress={handleSend}
+          style={{
+            backgroundColor: keyboardHeight > 0 ? '#3B82F6' : '#ffffff',
+            borderWidth: keyboardHeight > 0 ? 0 : 1,
+            borderColor: '#e5e7eb',
+            minWidth: 44,
+            minHeight: 44, // Ensure minimum size for visibility
+            transform: [{ scale: isInputFocused ? 1.05 : 1 }],
+          }}
         >
-          <Ionicons name="send" size={22} color="#fff" />
+          <Ionicons 
+            name="paper-plane" 
+            size={20} 
+            color={keyboardHeight > 0 ? "#fff" : "#130057"} 
+          />
         </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 };
 
@@ -129,7 +217,7 @@ const Stack = createNativeStackNavigator();
 const MessagesList: React.FC = () => {
   const navigation = useNavigation();
   return (
-    <View className="flex-1 bg-white pt-10">
+    <View className="flex-1 bg-white pt-10" style={{ paddingBottom: 90 }}>
       {/* Title */}
       <Text className="text-4xl font-bold mb-8 text-center">Messages</Text>
       {/* List of chats */}
