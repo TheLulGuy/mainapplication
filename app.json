@@ -29,6 +29,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "host.exp.exponent", 
+      "googleServicesFile": "./google-services.json", 
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

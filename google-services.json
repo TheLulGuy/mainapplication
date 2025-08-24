@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1059258118121",
+    "project_id": "soulability-prototype",
+    "storage_bucket": "soulability-prototype.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059258118121:android:2f082c10c18e1df7216578",
+        "android_client_info": {
+          "package_name": "host.exp.exponent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHUvTN5nR0F_s1n7iN8SAJSdnaal7I51U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
