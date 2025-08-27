@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React from 'react'
-import { analytics, auth } from 'FirebaseConfig';
+import { auth } from 'FirebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
 import { router } from 'expo-router';
 
