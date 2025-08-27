@@ -11,21 +11,21 @@ export default function RootLayout() {
   return (
       <Stack.Navigator>
         {/* Index screen without tabs */}
-        <Stack.Screen 
+        {/* <Stack.Screen 
           name="index" 
           component={Index} 
           options={{ headerShown: false }}
-        />
+        /> */}
         
         {/* Main app with tabs */}
         <Stack.Screen
-          name="(tabs)"
-          component={TabLayout}
+          name="(login)"
+          component={LoginScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="(login)"
-          component={LoginScreen}
+          name="(tabs)"
+          component={TabLayout}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
