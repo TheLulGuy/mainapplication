@@ -4,6 +4,7 @@ import CustomNavBar from "../../components/CustomNavBar";
 import Home from "./home";
 import Messages from "./messages";
 import Profile from "./profile";
+import Database from "./database";
 
 const Tab = createBottomTabNavigator();
 
@@ -18,6 +19,7 @@ export default function TabLayout() {
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Messages" component={Messages} />
       <Tab.Screen name="Profile" component={Profile} />
+      <Tab.Screen name="Database" component={Database} />
     </Tab.Navigator>
   );
 }
