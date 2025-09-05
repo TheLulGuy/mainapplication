@@ -3,15 +3,48 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../FirebaseConfig';
 import { collection, addDoc, getDocs, updateDoc, doc, query, where, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { heightPercentageToDP as hp} from 'react-native-responsive-screen';
+import { Picker } from '@react-native-picker/picker';
+import { heightPercentageToDP } from 'react-native-responsive-screen';
 
 export default function UserProfileScreen() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [number, setNumber] = useState('');
-  const [physicalAttributes, setPhysicalAttributes] = useState(['', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [docId, setDocId] = useState(null);
+
+  // Disability options for dropdowns
+  const disabilityCategories = {
+    mobility: [
+      'None', 'Wheelchair user', 'Amputee (upper limb)', 
+      'Amputee (lower limb)', 'Cerebral Palsy', 'Muscular Dystrophy',
+      'Multiple Sclerosis', 'Spinal Cord Injury', 'Arthritis'
+    ],
+    visual: [
+      'None', 'Blind', 'Low vision', 'Color blindness', 
+      'Glaucoma', 'Cataracts'
+    ],
+    hearing: [
+      'None', 'Deaf', 'Hard of hearing', 
+      'Hearing aid user', 'Cochlear implant user'
+    ],
+    neurological: [
+      'None', 'Epilepsy', 'Parkinson\'s Disease', 
+      'Stroke effects', 'Traumatic Brain Injury'
+    ],
+    chronic: [
+      'None', 'Diabetes', 'Heart condition', 
+      'Respiratory condition', 'Chronic pain'
+    ]
+  };
+
+  const [physicalAttributes, setPhysicalAttributes] = useState({
+    mobility: 'None',
+    visual: 'None',
+    hearing: 'None',
+    neurological: 'None',
+    chronic: 'None'
+  });
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -34,17 +67,15 @@ export default function UserProfileScreen() {
         setName(userData.name || '');
         setAge(userData.age?.toString() || '');
         setNumber(userData.number || '');
-        setPhysicalAttributes(userData.physical_attributes || ['', '', '', '', '']);
+        
+        // Load saved disabilities if they exist
+        if (userData.physical_attributes) {
+          setPhysicalAttributes(userData.physical_attributes);
+        }
       }
     } catch (error) {
       console.log("Error fetching user data:", error);
     }
-  };
-
-  const handleAttributeChange = (index: number, value: string) => {
-    const newAttributes = [...physicalAttributes];
-    newAttributes[index] = value;
-    setPhysicalAttributes(newAttributes);
   };
 
   const saveProfile = async () => {
@@ -65,23 +96,21 @@ export default function UserProfileScreen() {
         age: parseInt(age),
         number,
         email: user.email,
-        physical_attributes: physicalAttributes.filter(attr => attr.trim() !== ''),
+        physical_attributes: physicalAttributes,
         userId: user.uid,
         lastUpdated: new Date()
       };
 
       if (docId) {
-        // Update existing document
         const userDoc = doc(db, 'users', docId);
         await updateDoc(userDoc, userData);
         Alert.alert("Success", "Profile updated successfully!");
       } else {
-        // Create new document
         await addDoc(usersCollection, userData);
         Alert.alert("Success", "Profile created successfully!");
       }
       
-      fetchUserData(); // Refresh data to get docId if new
+      fetchUserData();
     } catch (error) {
       console.log("Error saving profile:", error);
       Alert.alert("Error", "Failed to save profile");
@@ -90,13 +119,17 @@ export default function UserProfileScreen() {
     }
   };
 
+  // Filter out "None" selections for display
+  const getSelectedDisabilities = () => {
+    return Object.entries(physicalAttributes)
+      .filter(([_, value]) => value !== 'None')
+      .map(([_, value]) => value);
+  };
+
   return (
     <SafeAreaView className='flex-1 bg-gray-100'>
       <ScrollView className='flex-1 p-5'
-            contentContainerStyle={{
-              paddingBottom: hp(8),
-        }}
-      >
+        contentContainerStyle={{ paddingBottom: heightPercentageToDP(8) }}>
         <Text className='text-2xl font-bold mb-6 text-gray-800 text-center'>User Profile</Text>
         
         {/* Email (read-only) */}
@@ -144,23 +177,84 @@ export default function UserProfileScreen() {
           />
         </View>
 
-        {/* Physical Attributes (Disabilities) */}
+        {/* Physical Attributes Dropdowns */}
         <View className='mb-6'>
-          <Text className='text-sm font-medium text-gray-700 mb-3'>Physical Attributes (Disabilities)</Text>
-          {physicalAttributes.map((attribute, index) => (
-            <TextInput
-              key={index}
-              placeholder={`Disability ${index + 1} (optional)`}
-              value={attribute}
-              onChangeText={(value) => handleAttributeChange(index, value)}
-              className='bg-white p-3 rounded-lg border border-gray-300 mb-2'
-            />
-          ))}
+          <Text className='text-sm font-medium text-gray-700 mb-3'>Physical Attributes</Text>
+          
+          <View className='mb-4'>
+            <Text className='text-xs text-gray-600 mb-1'>Mobility & Physical</Text>
+            <View className='bg-white rounded-lg border border-gray-300'>
+              <Picker
+                selectedValue={physicalAttributes.mobility}
+                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, mobility: value})}
+              >
+                {disabilityCategories.mobility.map((option) => (
+                  <Picker.Item key={option} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
+          <View className='mb-4'>
+            <Text className='text-xs text-gray-600 mb-1'>Visual Impairments</Text>
+            <View className='bg-white rounded-lg border border-gray-300'>
+              <Picker
+                selectedValue={physicalAttributes.visual}
+                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, visual: value})}
+              >
+                {disabilityCategories.visual.map((option) => (
+                  <Picker.Item key={option} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
+          <View className='mb-4'>
+            <Text className='text-xs text-gray-600 mb-1'>Hearing Impairments</Text>
+            <View className='bg-white rounded-lg border border-gray-300'>
+              <Picker
+                selectedValue={physicalAttributes.hearing}
+                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, hearing: value})}
+              >
+                {disabilityCategories.hearing.map((option) => (
+                  <Picker.Item key={option} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
+          <View className='mb-4'>
+            <Text className='text-xs text-gray-600 mb-1'>Neurological Conditions</Text>
+            <View className='bg-white rounded-lg border border-gray-300'>
+              <Picker
+                selectedValue={physicalAttributes.neurological}
+                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, neurological: value})}
+              >
+                {disabilityCategories.neurological.map((option) => (
+                  <Picker.Item key={option} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
+          <View className='mb-4'>
+            <Text className='text-xs text-gray-600 mb-1'>Chronic Health Conditions</Text>
+            <View className='bg-white rounded-lg border border-gray-300'>
+              <Picker
+                selectedValue={physicalAttributes.chronic}
+                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, chronic: value})}
+              >
+                {disabilityCategories.chronic.map((option) => (
+                  <Picker.Item key={option} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+          </View>
         </View>
 
         {/* Save Button */}
         <TouchableOpacity 
-          className='bg-blue-500 p-4 rounded-lg items-center shadow-lg'
+          className='bg-blue-500 p-4 rounded-lg items-center shadow-lg mb-6'
           onPress={saveProfile}
           disabled={loading}
         >
@@ -170,14 +264,14 @@ export default function UserProfileScreen() {
         </TouchableOpacity>
 
         {/* Current Data Preview */}
-        <View className='mt-8 p-4 bg-blue-50 rounded-lg'>
-          <Text className='font-medium text-blue-800 mb-2'>Current Data:</Text>
+        <View className='p-4 bg-blue-50 rounded-lg'>
+          <Text className='font-medium text-blue-800 mb-2'>Profile Summary:</Text>
           <Text className='text-blue-700'>Name: {name || 'Not set'}</Text>
           <Text className='text-blue-700'>Age: {age || 'Not set'}</Text>
           <Text className='text-blue-700'>Phone: {number || 'Not set'}</Text>
           <Text className='text-blue-700'>Email: {user?.email || 'Not set'}</Text>
-          <Text className='text-blue-700'>
-            Disabilities: {physicalAttributes.filter(attr => attr).join(', ') || 'None specified'}
+          <Text className='text-blue-700 mt-2'>
+            Disabilities: {getSelectedDisabilities().join(', ') || 'None selected'}
           </Text>
         </View>
       </ScrollView>
