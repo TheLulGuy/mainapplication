@@ -1,12 +1,13 @@
 // app/(tabs)/profile.tsx
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { db } from '../../FirebaseConfig';
+import { db, storage } from '../../FirebaseConfig';
 import { collection, getDocs, query, where, doc, deleteDoc } from 'firebase/firestore';
 import { getAuth, signOut } from 'firebase/auth';
-import { useRouter } from 'expo-router';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ref, getDownloadURL, getMetadata } from 'firebase/storage';
 import EditProfileLogic from './editprofile';
+import EditProfilePictureLogic from './editprofilepicture';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,9 +22,18 @@ export default function ProfileScreen() {
       />
       <Stack.Screen 
         name="EditProfile" 
-        component={EditProfileLogic} // Import this from editprofile.tsx
+        component={EditProfileLogic}
         options={{ 
           title: 'Edit Profile',
+          headerBackTitle: 'Back',
+          headerShown: true
+        }} 
+      />
+      <Stack.Screen 
+        name="EditProfilePicture" 
+        component={EditProfilePictureLogic}
+        options={{ 
+          title: 'Edit Profile Picture',
           headerBackTitle: 'Back',
           headerShown: true
         }} 
@@ -34,18 +44,50 @@ export default function ProfileScreen() {
 
 function ProfileScreenLogic({ navigation }) {
   const [userData, setUserData] = useState<any>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const auth = getAuth();
   const user = auth.currentUser;
+
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile'); // Navigate to the EditProfile screen
+    navigation.navigate('EditProfile');
   };
+  
+  const handleEditProfileImage = () => {
+    navigation.navigate('EditProfilePicture');
+  }
 
   useEffect(() => {
     if (user) {
       fetchUserProfile();
+      fetchProfileImage();
     }
   }, [user]);
+
+  const fetchProfileImage = async () => {
+    if (!user) return;
+    
+    setImageLoading(true);
+    try {
+      const profileImageRef = ref(storage, `profile-pictures/${user.uid}/profile.jpg`);
+      
+      // Check if profile image exists
+      try {
+        await getMetadata(profileImageRef);
+        const url = await getDownloadURL(profileImageRef);
+        setProfileImage(url);
+      } catch (error) {
+        // File doesn't exist, which is fine
+        setProfileImage(null);
+      }
+    } catch (error) {
+      console.error("Error fetching profile image: ", error);
+      setProfileImage(null);
+    } finally {
+      setImageLoading(false);
+    }
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -73,15 +115,23 @@ function ProfileScreenLogic({ navigation }) {
     }
   };
 
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // The auth state listener in your App.tsx will handle navigation
     } catch (error) {
       console.log("Logout error:", error);
       Alert.alert("Error", "Failed to logout");
     }
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const getSelectedDisabilities = () => {
@@ -108,8 +158,8 @@ function ProfileScreenLogic({ navigation }) {
         {/* Header */}
         <View className='flex-row justify-between items-center mb-8'>
           <Text className='text-2xl font-bold text-gray-800'>My Profile</Text>
-          <TouchableOpacity onPress={handleEditProfile}>
-            <Text className='text-blue-500 font-semibold'>Edit Profile</Text>
+          <TouchableOpacity onPress={handleEditProfileImage}>
+            <Text className='text-blue-500 font-semibold'>Edit Profile Image</Text>
           </TouchableOpacity>
         </View>
 
@@ -117,11 +167,24 @@ function ProfileScreenLogic({ navigation }) {
         <View className='bg-white rounded-2xl p-6 shadow-sm mb-6'>
           {/* Profile Header */}
           <View className='items-center mb-6'>
-            <View className='w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-3'>
-              <Text className='text-white text-3xl font-bold'>
-                {userData?.name?.[0]?.toUpperCase() || 'U'}
-              </Text>
-            </View>
+            <TouchableOpacity onPress={handleEditProfileImage} className='items-center'>
+              {imageLoading ? (
+                <View className='w-20 h-20 bg-gray-200 rounded-full items-center justify-center mb-3'>
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                </View>
+              ) : profileImage ? (
+                <Image 
+                  source={{ uri: profileImage }} 
+                  className='w-20 h-20 rounded-full mb-3 border-4 border-white shadow-lg'
+                />
+              ) : (
+                <View className='w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-3'>
+                  <Text className='text-white text-3xl font-bold'>
+                    {getInitials(userData?.name)}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <Text className='text-xl font-bold text-gray-800'>{userData?.name || 'Not set'}</Text>
             <Text className='text-gray-500'>{user?.email}</Text>
           </View>

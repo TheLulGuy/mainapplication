@@ -6,22 +6,6 @@ import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
 
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
-// const Stack = createNativeStackNavigator();
-// export default function EditProfile() {
-//   return (
-//     <Stack.Screen 
-//       name="EditProfile" 
-//       component={EditProfileLogic} 
-//       options={{ 
-//         title: 'Edit Profile',
-//         headerBackTitle: 'Back',
-//         headerShown: true
-//       }} 
-//     />
-//   );
-// }
 
 export default function EditProfileLogic({ navigation }) {
 
