@@ -1,102 +1,186 @@
-import { TextInput, FlatList, TouchableOpacity, Text, SafeAreaView, View } from 'react-native';
+import { TextInput, TouchableOpacity, Text, SafeAreaView, View, ScrollView, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { db } from '../../FirebaseConfig';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, doc, query, where, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
-export default function TabTwoScreen() {
-  const [task, setTask] = useState('');
-  const [todos, setTodos] = useState<any>([]);
+export default function UserProfileScreen() {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [number, setNumber] = useState('');
+  const [physicalAttributes, setPhysicalAttributes] = useState(['', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
+  const [docId, setDocId] = useState(null);
+
   const auth = getAuth();
   const user = auth.currentUser;
-  const todosCollection = collection(db, 'todos');
+  const usersCollection = collection(db, 'users');
 
   useEffect(() => {
-    fetchTodos();
+    if (user) {
+      fetchUserData();
+    }
   }, [user]);
 
-  const fetchTodos = async () => {
-    if (user) {
-      const q = query(todosCollection, where("userId", "==", user.uid));
-      const data = await getDocs(q);
-      setTodos(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
-    } else {
-      console.log("No user logged in");
+  const fetchUserData = async () => {
+    try {
+      const q = query(usersCollection, where("email", "==", user.email));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        setDocId(querySnapshot.docs[0].id);
+        setName(userData.name || '');
+        setAge(userData.age?.toString() || '');
+        setNumber(userData.number || '');
+        setPhysicalAttributes(userData.physical_attributes || ['', '', '', '', '']);
+      }
+    } catch (error) {
+      console.log("Error fetching user data:", error);
     }
   };
 
-  const addTodo = async () => {
-    if (user) {
-      await addDoc(todosCollection, { task, completed: false, userId: user.uid });
-      setTask('');
-      fetchTodos();
-    } else {
-      console.log("No user logged in");
+  const handleAttributeChange = (index: number, value: string) => {
+    const newAttributes = [...physicalAttributes];
+    newAttributes[index] = value;
+    setPhysicalAttributes(newAttributes);
+  };
+
+  const saveProfile = async () => {
+    if (!user) {
+      Alert.alert("Error", "No user logged in");
+      return;
     }
-  };
 
-  const updateTodo = async (id: string, completed: any) => {
-    const todoDoc = doc(db, 'todos', id);
-    await updateDoc(todoDoc, { completed: !completed });
-    fetchTodos();
-  };
+    if (!name || !age || !number) {
+      Alert.alert("Error", "Please fill in all required fields");
+      return;
+    }
 
-  const deleteTodo = async (id: string) => {
-    const todoDoc = doc(db, 'todos', id);
-    await deleteDoc(todoDoc);
-    fetchTodos();
+    setLoading(true);
+    try {
+      const userData = {
+        name,
+        age: parseInt(age),
+        number,
+        email: user.email,
+        physical_attributes: physicalAttributes.filter(attr => attr.trim() !== ''),
+        userId: user.uid,
+        lastUpdated: new Date()
+      };
+
+      if (docId) {
+        // Update existing document
+        const userDoc = doc(db, 'users', docId);
+        await updateDoc(userDoc, userData);
+        Alert.alert("Success", "Profile updated successfully!");
+      } else {
+        // Create new document
+        await addDoc(usersCollection, userData);
+        Alert.alert("Success", "Profile created successfully!");
+      }
+      
+      fetchUserData(); // Refresh data to get docId if new
+    } catch (error) {
+      console.log("Error saving profile:", error);
+      Alert.alert("Error", "Failed to save profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView className='flex-1 bg-gray-100'>
-      <View className='flex-1 items-center justify-center p-5'>
-        <Text className='text-2xl font-bold mb-2 text-gray-800'>Todo List</Text>
+      <ScrollView className='flex-1 p-5'
+            contentContainerStyle={{
+              paddingBottom: hp(8),
+        }}
+      >
+        <Text className='text-2xl font-bold mb-6 text-gray-800 text-center'>User Profile</Text>
         
-        <View className='flex-row justify-between items-center w-full mb-4'>
+        {/* Email (read-only) */}
+        <View className='mb-4'>
+          <Text className='text-sm font-medium text-gray-700 mb-1'>Email</Text>
           <TextInput
-            placeholder="New Task"
-            placeholderTextColor="#9CA3AF"
-            value={task}
-            onChangeText={(text) => setTask(text)}
-            className='flex-1 h-10 border border-gray-300 px-3 mr-2 rounded-lg bg-white'
+            value={user?.email || ''}
+            editable={false}
+            className='bg-gray-200 p-3 rounded-lg text-gray-600'
           />
-          <TouchableOpacity 
-            className='px-4 py-2 bg-orange-400 rounded-full items-center justify-center shadow-lg'
-            onPress={addTodo}
-          >
-            <Text className='text-white text-lg font-semibold'>Add</Text>
-          </TouchableOpacity>
         </View>
-        
-        <FlatList
-          data={todos}
-          className='w-full'
-          renderItem={({ item }) => (
-            <View className='flex-row justify-between items-center my-2 p-3 bg-white rounded-lg shadow-sm'>
-              <Text className={`flex-1 text-base ${item.completed ? 'line-through text-gray-500' : ''}`}>
-                {item.task}
-              </Text>
-              
-              <TouchableOpacity 
-                className='px-3 py-2 bg-indigo-500 rounded-xl ml-2 shadow'
-                onPress={() => updateTodo(item.id, item.completed)}
-              >
-                <Text className='text-white text-sm font-medium'>
-                  {item.completed ? "Undo" : "Complete"}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                className='px-3 py-2 bg-red-500 rounded-xl ml-2 shadow'
-                onPress={() => deleteTodo(item.id)}
-              >
-                <Text className='text-white text-sm font-medium'>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          keyExtractor={(item) => item.id}
-        />
-      </View>
+
+        {/* Name */}
+        <View className='mb-4'>
+          <Text className='text-sm font-medium text-gray-700 mb-1'>Full Name *</Text>
+          <TextInput
+            placeholder="Enter your full name"
+            value={name}
+            onChangeText={setName}
+            className='bg-white p-3 rounded-lg border border-gray-300'
+          />
+        </View>
+
+        {/* Age */}
+        <View className='mb-4'>
+          <Text className='text-sm font-medium text-gray-700 mb-1'>Age *</Text>
+          <TextInput
+            placeholder="Enter your age"
+            value={age}
+            onChangeText={setAge}
+            keyboardType="numeric"
+            className='bg-white p-3 rounded-lg border border-gray-300'
+          />
+        </View>
+
+        {/* Phone Number */}
+        <View className='mb-6'>
+          <Text className='text-sm font-medium text-gray-700 mb-1'>Phone Number *</Text>
+          <TextInput
+            placeholder="Enter your phone number"
+            value={number}
+            onChangeText={setNumber}
+            keyboardType="phone-pad"
+            className='bg-white p-3 rounded-lg border border-gray-300'
+          />
+        </View>
+
+        {/* Physical Attributes (Disabilities) */}
+        <View className='mb-6'>
+          <Text className='text-sm font-medium text-gray-700 mb-3'>Physical Attributes (Disabilities)</Text>
+          {physicalAttributes.map((attribute, index) => (
+            <TextInput
+              key={index}
+              placeholder={`Disability ${index + 1} (optional)`}
+              value={attribute}
+              onChangeText={(value) => handleAttributeChange(index, value)}
+              className='bg-white p-3 rounded-lg border border-gray-300 mb-2'
+            />
+          ))}
+        </View>
+
+        {/* Save Button */}
+        <TouchableOpacity 
+          className='bg-blue-500 p-4 rounded-lg items-center shadow-lg'
+          onPress={saveProfile}
+          disabled={loading}
+        >
+          <Text className='text-white text-lg font-semibold'>
+            {loading ? 'Saving...' : (docId ? 'Update Profile' : 'Create Profile')}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Current Data Preview */}
+        <View className='mt-8 p-4 bg-blue-50 rounded-lg'>
+          <Text className='font-medium text-blue-800 mb-2'>Current Data:</Text>
+          <Text className='text-blue-700'>Name: {name || 'Not set'}</Text>
+          <Text className='text-blue-700'>Age: {age || 'Not set'}</Text>
+          <Text className='text-blue-700'>Phone: {number || 'Not set'}</Text>
+          <Text className='text-blue-700'>Email: {user?.email || 'Not set'}</Text>
+          <Text className='text-blue-700'>
+            Disabilities: {physicalAttributes.filter(attr => attr).join(', ') || 'None specified'}
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
