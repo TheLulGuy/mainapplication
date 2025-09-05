@@ -6,35 +6,57 @@ import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
 
-export default function UserProfileScreen() {
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// const Stack = createNativeStackNavigator();
+// export default function EditProfile() {
+//   return (
+//     <Stack.Screen 
+//       name="EditProfile" 
+//       component={EditProfileLogic} 
+//       options={{ 
+//         title: 'Edit Profile',
+//         headerBackTitle: 'Back',
+//         headerShown: true
+//       }} 
+//     />
+//   );
+// }
+
+export default function EditProfileLogic({ navigation }) {
+
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [number, setNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [docId, setDocId] = useState(null);
 
+  const handleSave = () => {
+    navigation.goBack();
+  };
+
   // Disability options for dropdowns
   const disabilityCategories = {
     mobility: [
-      'None', 'Wheelchair user', 'Amputee (upper limb)', 
-      'Amputee (lower limb)', 'Cerebral Palsy', 'Muscular Dystrophy',
-      'Multiple Sclerosis', 'Spinal Cord Injury', 'Arthritis'
+        'None', 'Wheelchair user', 'Amputee (upper limb)', 
+        'Amputee (lower limb)', 'Cerebral Palsy', 'Muscular Dystrophy',
+        'Multiple Sclerosis', 'Spinal Cord Injury', 'Arthritis'
     ],
     visual: [
-      'None', 'Blind', 'Low vision', 'Color blindness', 
-      'Glaucoma', 'Cataracts'
+        'None', 'Blind', 'Low vision', 'Color blindness', 
+        'Glaucoma', 'Cataracts'
     ],
     hearing: [
-      'None', 'Deaf', 'Hard of hearing', 
-      'Hearing aid user', 'Cochlear implant user'
+        'None', 'Deaf', 'Hard of hearing', 
+        'Hearing aid user', 'Cochlear implant user'
     ],
     neurological: [
-      'None', 'Epilepsy', 'Parkinson\'s Disease', 
-      'Stroke effects', 'Traumatic Brain Injury'
+        'None', 'Epilepsy', 'Parkinson\'s Disease', 
+        'Stroke effects', 'Traumatic Brain Injury'
     ],
     chronic: [
-      'None', 'Diabetes', 'Heart condition', 
-      'Respiratory condition', 'Chronic pain'
+        'None', 'Diabetes', 'Heart condition', 
+        'Respiratory condition', 'Chronic pain'
     ]
   };
 
@@ -52,83 +74,85 @@ export default function UserProfileScreen() {
 
   useEffect(() => {
     if (user) {
-      fetchUserData();
+        fetchUserData();
     }
   }, [user]);
 
   const fetchUserData = async () => {
     try {
-      const q = query(usersCollection, where("email", "==", user.email));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        setDocId(querySnapshot.docs[0].id);
-        setName(userData.name || '');
-        setAge(userData.age?.toString() || '');
-        setNumber(userData.number || '');
+        const q = query(usersCollection, where("email", "==", user.email));
+        const querySnapshot = await getDocs(q);
         
-        // Load saved disabilities if they exist
-        if (userData.physical_attributes) {
-          setPhysicalAttributes(userData.physical_attributes);
+        if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            setDocId(querySnapshot.docs[0].id);
+            setName(userData.name || '');
+            setAge(userData.age?.toString() || '');
+            setNumber(userData.number || '');
+            
+            // Load saved disabilities if they exist
+            if (userData.physical_attributes) {
+                setPhysicalAttributes(userData.physical_attributes);
+            }
         }
-      }
     } catch (error) {
-      console.log("Error fetching user data:", error);
+        console.log("Error fetching user data:", error);
     }
   };
 
   const saveProfile = async () => {
     if (!user) {
-      Alert.alert("Error", "No user logged in");
-      return;
+        Alert.alert("Error", "No user logged in");
+        return;
     }
-
+    
     if (!name || !age || !number) {
-      Alert.alert("Error", "Please fill in all required fields");
-      return;
+        Alert.alert("Error", "Please fill in all required fields");
+        return;
     }
-
+    
     setLoading(true);
     try {
-      const userData = {
-        name,
-        age: parseInt(age),
-        number,
-        email: user.email,
-        physical_attributes: physicalAttributes,
-        userId: user.uid,
-        lastUpdated: new Date()
-      };
-
-      if (docId) {
-        const userDoc = doc(db, 'users', docId);
-        await updateDoc(userDoc, userData);
-        Alert.alert("Success", "Profile updated successfully!");
-      } else {
-        await addDoc(usersCollection, userData);
-        Alert.alert("Success", "Profile created successfully!");
-      }
-      
-      fetchUserData();
+        const userData = {
+            name,
+            age: parseInt(age),
+            number,
+            email: user.email,
+            physical_attributes: physicalAttributes,
+            userId: user.uid,
+            lastUpdated: new Date()
+        };
+        
+        if (docId) {
+            const userDoc = doc(db, 'users', docId);
+            await updateDoc(userDoc, userData);
+            Alert.alert("Success", "Profile updated successfully!");
+            handleSave();
+        } else {
+            await addDoc(usersCollection, userData);
+            Alert.alert("Success", "Profile created successfully!");
+            handleSave();
+        }
+        
+        fetchUserData();
     } catch (error) {
       console.log("Error saving profile:", error);
       Alert.alert("Error", "Failed to save profile");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
-  // Filter out "None" selections for display
-  const getSelectedDisabilities = () => {
+// Filter out "None" selections for display
+const getSelectedDisabilities = () => {
     return Object.entries(physicalAttributes)
-      .filter(([_, value]) => value !== 'None')
-      .map(([_, value]) => value);
-  };
+    .filter(([_, value]) => value !== 'None')
+    .map(([_, value]) => value);
+};
 
-  return (
+return (
     <SafeAreaView className='flex-1 bg-gray-100'>
-      <ScrollView className='flex-1 p-5'
+    <ScrollView className='flex-1 p-5'
         contentContainerStyle={{ paddingBottom: heightPercentageToDP(8) }}>
         <Text className='text-2xl font-bold mb-6 text-gray-800 text-center'>User Profile</Text>
         
@@ -150,7 +174,7 @@ export default function UserProfileScreen() {
             value={name}
             onChangeText={setName}
             className='bg-white p-3 rounded-lg border border-gray-300'
-          />
+            />
         </View>
 
         {/* Age */}
@@ -174,7 +198,7 @@ export default function UserProfileScreen() {
             onChangeText={setNumber}
             keyboardType="phone-pad"
             className='bg-white p-3 rounded-lg border border-gray-300'
-          />
+            />
         </View>
 
         {/* Physical Attributes Dropdowns */}
@@ -187,9 +211,9 @@ export default function UserProfileScreen() {
               <Picker
                 selectedValue={physicalAttributes.mobility}
                 onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, mobility: value})}
-              >
+                >
                 {disabilityCategories.mobility.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
+                    <Picker.Item key={option} label={option} value={option} />
                 ))}
               </Picker>
             </View>
@@ -201,9 +225,9 @@ export default function UserProfileScreen() {
               <Picker
                 selectedValue={physicalAttributes.visual}
                 onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, visual: value})}
-              >
+                >
                 {disabilityCategories.visual.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
+                    <Picker.Item key={option} label={option} value={option} />
                 ))}
               </Picker>
             </View>
@@ -215,9 +239,9 @@ export default function UserProfileScreen() {
               <Picker
                 selectedValue={physicalAttributes.hearing}
                 onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, hearing: value})}
-              >
+                >
                 {disabilityCategories.hearing.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
+                    <Picker.Item key={option} label={option} value={option} />
                 ))}
               </Picker>
             </View>
@@ -229,9 +253,9 @@ export default function UserProfileScreen() {
               <Picker
                 selectedValue={physicalAttributes.neurological}
                 onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, neurological: value})}
-              >
+                >
                 {disabilityCategories.neurological.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
+                    <Picker.Item key={option} label={option} value={option} />
                 ))}
               </Picker>
             </View>
@@ -245,7 +269,7 @@ export default function UserProfileScreen() {
                 onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, chronic: value})}
               >
                 {disabilityCategories.chronic.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
+                    <Picker.Item key={option} label={option} value={option} />
                 ))}
               </Picker>
             </View>
@@ -257,7 +281,7 @@ export default function UserProfileScreen() {
           className='bg-blue-500 p-4 rounded-lg items-center shadow-lg mb-6'
           onPress={saveProfile}
           disabled={loading}
-        >
+          >
           <Text className='text-white text-lg font-semibold'>
             {loading ? 'Saving...' : (docId ? 'Update Profile' : 'Create Profile')}
           </Text>
@@ -276,5 +300,5 @@ export default function UserProfileScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+);
 }
