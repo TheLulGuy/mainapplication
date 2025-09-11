@@ -59,27 +59,33 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
     navigation.navigate('EditProfilePicture', { onGoBack: refreshData });
   }
 
-  const refreshData = () => {
+  const refreshData = async () => {
     if (user) {
-      fetchUserProfile();
-      fetchProfileImage();
+      await fetchUserProfile();
+      fetchProfileImage(); // Called after user data is loaded
     }
   };
 
   useEffect(() => {
-    if (user) {
-      fetchUserProfile();
-      fetchProfileImage();
-    }
+    const loadData = async () => {
+      if (user) {
+        await fetchUserProfile();
+        fetchProfileImage(); // Called after user data is loaded
+      }
+    };
+    loadData();
   }, [user]);
 
   // Refresh data whenever the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      if (user) {
-        fetchUserProfile();
-        fetchProfileImage();
-      }
+      const loadData = async () => {
+        if (user) {
+          await fetchUserProfile();
+          fetchProfileImage(); // Called after user data is loaded
+        }
+      };
+      loadData();
     }, [user])
   );
 
@@ -88,12 +94,19 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
     
     setImageLoading(true);
     try {
+      // First, check if user has a profileImageURL in their Firestore document
+      if (userData?.profileImageURL) {
+        const timestamp = new Date().getTime();
+        setProfileImage(`${userData.profileImageURL}&timestamp=${timestamp}`);
+        setImageLoading(false);
+        return;
+      }
+
+      // Fallback: Check Firebase Storage for user's own uploaded image
       const profileImageRef = ref(storage, `profile-pictures/${user.uid}/profile.jpg`);
       
-      // Check if profile image exists
       try {
         await getMetadata(profileImageRef);
-        // Add timestamp to prevent caching issues
         const url = await getDownloadURL(profileImageRef);
         const timestamp = new Date().getTime();
         setProfileImage(`${url}&timestamp=${timestamp}`);
