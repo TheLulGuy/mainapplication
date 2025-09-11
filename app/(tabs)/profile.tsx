@@ -26,7 +26,7 @@ export default function ProfileScreen() {
         options={{ 
           title: 'Edit Profile',
           headerBackTitle: 'Back',
-          headerShown: true
+          headerShown: false
         }} 
       />
       <Stack.Screen 
@@ -44,7 +44,7 @@ export default function ProfileScreen() {
 
 function ProfileScreenLogic({ navigation }) {
   const [userData, setUserData] = useState<any>(null);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage,  setProfileImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const auth = getAuth();

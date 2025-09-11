@@ -5,7 +5,7 @@ import { collection, addDoc, getDocs, updateDoc, doc, query, where, setDoc } fro
 import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
-
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function EditProfileLogic({ navigation }) {
 
@@ -138,7 +138,13 @@ return (
     <SafeAreaView className='flex-1 bg-gray-100'>
     <ScrollView className='flex-1 p-5'
         contentContainerStyle={{ paddingBottom: heightPercentageToDP(8) }}>
-        <Text className='text-2xl font-bold mb-6 text-gray-800 text-center'>User Profile</Text>
+        <View className='flex-row items-center px-6 mb-6'>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={28} color="#130057" />
+          </TouchableOpacity>
+          <Text className='text-2xl font-bold mb-6 text-gray-800 text-center'>User Profile</Text>
+
+        </View>
         
         {/* Email (read-only) */}
         <View className='mb-4'>
