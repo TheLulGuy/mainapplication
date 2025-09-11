@@ -3,54 +3,46 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../FirebaseConfig';
 import { collection, addDoc, getDocs, updateDoc, doc, query, where, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Picker } from '@react-native-picker/picker';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-export default function EditProfileLogic({ navigation }) {
+export default function EditProfileLogic({ navigation }: { navigation: any }) {
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [number, setNumber] = useState('');
   const [loading, setLoading] = useState(false);
-  const [docId, setDocId] = useState(null);
+  const [docId, setDocId] = useState<string | null>(null);
 
   const handleSave = () => {
     navigation.goBack();
   };
 
-  // Disability options for dropdowns
-  const disabilityCategories = {
-    mobility: [
-        'None', 'Wheelchair user', 'Amputee (upper limb)', 
-        'Amputee (lower limb)', 'Cerebral Palsy', 'Muscular Dystrophy',
-        'Multiple Sclerosis', 'Spinal Cord Injury', 'Arthritis'
-    ],
-    visual: [
-        'None', 'Blind', 'Low vision', 'Color blindness', 
-        'Glaucoma', 'Cataracts'
-    ],
-    hearing: [
-        'None', 'Deaf', 'Hard of hearing', 
-        'Hearing aid user', 'Cochlear implant user'
-    ],
-    neurological: [
-        'None', 'Epilepsy', 'Parkinson\'s Disease', 
-        'Stroke effects', 'Traumatic Brain Injury'
-    ],
-    chronic: [
-        'None', 'Diabetes', 'Heart condition', 
-        'Respiratory condition', 'Chronic pain'
-    ]
-  };
+  // Physical disability options for multiple selection
+  const physicalDisabilities = [
+    'Upper limb amputee',
+    'Lower limb amputee',
+    'Bilateral upper limb amputee',
+    'Bilateral lower limb amputee',
+    'Quadruple amputee',
+    'Cerebral Palsy',
+    'Muscular Dystrophy',
+    'Multiple Sclerosis',
+    'Spinal Cord Injury (Paraplegia)',
+    'Spinal Cord Injury (Quadriplegia)',
+    'Spina Bifida',
+    'Arthritis (severe mobility impact)',
+    'Joint replacement/reconstruction',
+    'Limb deformities',
+    'Chronic back/spine conditions',
+    'Mobility device user (wheelchair)',
+    'Mobility device user (walker/crutches)',
+    'Balance/coordination disorders',
+    'Muscle weakness disorders',
+    'Bone disorders (brittle bones, etc.)'
+  ];
 
-  const [physicalAttributes, setPhysicalAttributes] = useState({
-    mobility: 'None',
-    visual: 'None',
-    hearing: 'None',
-    neurological: 'None',
-    chronic: 'None'
-  });
+  const [selectedDisabilities, setSelectedDisabilities] = useState<string[]>([]);
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -64,6 +56,8 @@ export default function EditProfileLogic({ navigation }) {
 
   const fetchUserData = async () => {
     try {
+        if (!user?.email) return;
+        
         const q = query(usersCollection, where("email", "==", user.email));
         const querySnapshot = await getDocs(q);
         
@@ -75,8 +69,8 @@ export default function EditProfileLogic({ navigation }) {
             setNumber(userData.number || '');
             
             // Load saved disabilities if they exist
-            if (userData.physical_attributes) {
-                setPhysicalAttributes(userData.physical_attributes);
+            if (userData.physical_disabilities) {
+                setSelectedDisabilities(userData.physical_disabilities);
             }
         }
     } catch (error) {
@@ -102,7 +96,7 @@ export default function EditProfileLogic({ navigation }) {
             age: parseInt(age),
             number,
             email: user.email,
-            physical_attributes: physicalAttributes,
+            physical_disabilities: selectedDisabilities,
             userId: user.uid,
             lastUpdated: new Date()
         };
@@ -127,11 +121,18 @@ export default function EditProfileLogic({ navigation }) {
     }
 };
 
+  // Toggle disability selection
+  const toggleDisability = (disability: string) => {
+    if (selectedDisabilities.includes(disability)) {
+      setSelectedDisabilities(selectedDisabilities.filter(d => d !== disability));
+    } else {
+      setSelectedDisabilities([...selectedDisabilities, disability]);
+    }
+  };
+
 // Filter out "None" selections for display
 const getSelectedDisabilities = () => {
-    return Object.entries(physicalAttributes)
-    .filter(([_, value]) => value !== 'None')
-    .map(([_, value]) => value);
+    return selectedDisabilities;
 };
 
 return (
@@ -191,80 +192,42 @@ return (
             />
         </View>
 
-        {/* Physical Attributes Dropdowns */}
-        <View className='mb-6'>
-          <Text className='text-sm font-medium text-gray-700 mb-3'>Physical Attributes</Text>
-          
-          <View className='mb-4'>
-            <Text className='text-xs text-gray-600 mb-1'>Mobility & Physical</Text>
-            <View className='bg-white rounded-lg border border-gray-300'>
-              <Picker
-                selectedValue={physicalAttributes.mobility}
-                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, mobility: value})}
-                >
-                {disabilityCategories.mobility.map((option) => (
-                    <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
+      {/* Disability Selection */}
+      <Text className="text-lg font-medium text-black mb-2">Physical Disabilities</Text>
+      <View className="bg-gray-100 p-4 rounded-lg mb-4">
+        {physicalDisabilities.map((disability) => (
+          <TouchableOpacity
+            key={disability}
+            onPress={() => toggleDisability(disability)}
+            className={`flex-row items-center justify-between p-3 mb-2 rounded-lg ${
+              selectedDisabilities.includes(disability) 
+                ? 'bg-gray-300' 
+                : 'bg-white border border-gray-200'
+            }`}
+          >
+            <Text 
+              className={`text-base ${
+                selectedDisabilities.includes(disability) 
+                  ? 'text-gray-500' 
+                  : 'text-black'
+              }`}
+            >
+              {disability}
+            </Text>
+            <View 
+              className={`w-5 h-5 border-2 rounded ${
+                selectedDisabilities.includes(disability)
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-gray-300'
+              }`}
+            >
+              {selectedDisabilities.includes(disability) && (
+                <Text className="text-white text-xs text-center">✓</Text>
+              )}
             </View>
-          </View>
-
-          <View className='mb-4'>
-            <Text className='text-xs text-gray-600 mb-1'>Visual Impairments</Text>
-            <View className='bg-white rounded-lg border border-gray-300'>
-              <Picker
-                selectedValue={physicalAttributes.visual}
-                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, visual: value})}
-                >
-                {disabilityCategories.visual.map((option) => (
-                    <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          <View className='mb-4'>
-            <Text className='text-xs text-gray-600 mb-1'>Hearing Impairments</Text>
-            <View className='bg-white rounded-lg border border-gray-300'>
-              <Picker
-                selectedValue={physicalAttributes.hearing}
-                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, hearing: value})}
-                >
-                {disabilityCategories.hearing.map((option) => (
-                    <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          <View className='mb-4'>
-            <Text className='text-xs text-gray-600 mb-1'>Neurological Conditions</Text>
-            <View className='bg-white rounded-lg border border-gray-300'>
-              <Picker
-                selectedValue={physicalAttributes.neurological}
-                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, neurological: value})}
-                >
-                {disabilityCategories.neurological.map((option) => (
-                    <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          <View className='mb-4'>
-            <Text className='text-xs text-gray-600 mb-1'>Chronic Health Conditions</Text>
-            <View className='bg-white rounded-lg border border-gray-300'>
-              <Picker
-                selectedValue={physicalAttributes.chronic}
-                onValueChange={(value) => setPhysicalAttributes({...physicalAttributes, chronic: value})}
-              >
-                {disabilityCategories.chronic.map((option) => (
-                    <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        ))}
+      </View>
 
         {/* Save Button */}
         <TouchableOpacity 

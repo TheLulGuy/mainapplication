@@ -42,7 +42,7 @@ export default function ProfileScreen() {
   );
 }
 
-function ProfileScreenLogic({ navigation }) {
+function ProfileScreenLogic({ navigation }: { navigation: any }) {
   const [userData, setUserData] = useState<any>(null);
   const [profileImage,  setProfileImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -104,7 +104,7 @@ function ProfileScreenLogic({ navigation }) {
           name: 'Not set',
           age: 'Not set',
           number: 'Not set',
-          physical_attributes: {}
+          physical_disabilities: []
         });
       }
     } catch (error) {
@@ -135,13 +135,11 @@ function ProfileScreenLogic({ navigation }) {
   };
 
   const getSelectedDisabilities = () => {
-    if (!userData?.physical_attributes) return 'None specified';
+    if (!userData?.physical_disabilities || userData.physical_disabilities.length === 0) {
+      return 'None specified';
+    }
     
-    const disabilities = Object.entries(userData.physical_attributes)
-      .filter(([_, value]) => value !== 'None')
-      .map(([_, value]) => value);
-    
-    return disabilities.length > 0 ? disabilities.join(', ') : 'None specified';
+    return userData.physical_disabilities.join(', ');
   };
 
   if (loading) {
@@ -211,9 +209,9 @@ function ProfileScreenLogic({ navigation }) {
             </View>
           </View>
 
-          {/* Physical Attributes */}
+          {/* Physical Disabilities */}
           <View className='mt-6'>
-            <Text className='text-lg font-semibold text-gray-800 mb-3'>Physical Attributes</Text>
+            <Text className='text-lg font-semibold text-gray-800 mb-3'>Physical Disabilities</Text>
             <View className='bg-blue-50 p-4 rounded-lg'>
               <Text className='text-blue-800'>{getSelectedDisabilities()}</Text>
             </View>
