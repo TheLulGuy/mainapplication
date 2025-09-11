@@ -5,6 +5,7 @@ import { db, storage } from '../../FirebaseConfig';
 import { collection, getDocs, query, where, doc, deleteDoc } from 'firebase/firestore';
 import { getAuth, signOut } from 'firebase/auth';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { ref, getDownloadURL, getMetadata } from 'firebase/storage';
 import EditProfileLogic from './editprofile';
 import EditProfilePictureLogic from './editprofilepicture';
@@ -51,12 +52,19 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
   const user = auth.currentUser;
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile');
+    navigation.navigate('EditProfile', { onGoBack: refreshData });
   };
   
   const handleEditProfileImage = () => {
-    navigation.navigate('EditProfilePicture');
+    navigation.navigate('EditProfilePicture', { onGoBack: refreshData });
   }
+
+  const refreshData = () => {
+    if (user) {
+      fetchUserProfile();
+      fetchProfileImage();
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -64,6 +72,16 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
       fetchProfileImage();
     }
   }, [user]);
+
+  // Refresh data whenever the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchUserProfile();
+        fetchProfileImage();
+      }
+    }, [user])
+  );
 
   const fetchProfileImage = async () => {
     if (!user) return;
@@ -75,8 +93,10 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
       // Check if profile image exists
       try {
         await getMetadata(profileImageRef);
+        // Add timestamp to prevent caching issues
         const url = await getDownloadURL(profileImageRef);
-        setProfileImage(url);
+        const timestamp = new Date().getTime();
+        setProfileImage(`${url}&timestamp=${timestamp}`);
       } catch (error) {
         // File doesn't exist, which is fine
         setProfileImage(null);

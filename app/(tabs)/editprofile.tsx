@@ -6,7 +6,7 @@ import { getAuth } from 'firebase/auth';
 import { heightPercentageToDP } from 'react-native-responsive-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-export default function EditProfileLogic({ navigation }: { navigation: any }) {
+export default function EditProfileLogic({ navigation, route }: { navigation: any, route?: any }) {
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
@@ -15,6 +15,10 @@ export default function EditProfileLogic({ navigation }: { navigation: any }) {
   const [docId, setDocId] = useState<string | null>(null);
 
   const handleSave = () => {
+    // Call the refresh callback if provided
+    if (route?.params?.onGoBack) {
+      route.params.onGoBack();
+    }
     navigation.goBack();
   };
 

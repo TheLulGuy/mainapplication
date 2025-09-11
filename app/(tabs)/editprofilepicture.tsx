@@ -5,7 +5,7 @@ import { getDownloadURL, ref, uploadBytes, getMetadata, deleteObject } from 'fir
 import * as ImagePicker from 'expo-image-picker';
 import { User, onAuthStateChanged } from 'firebase/auth';
 
-export default function EditProfilePictureLogic() {
+export default function EditProfilePictureLogic({ navigation, route }: { navigation?: any, route?: any }) {
   const [image, setImage] = useState<any>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -84,6 +84,11 @@ export default function EditProfilePictureLogic() {
       setProfileImage(url);
       setImage(null);
       Alert.alert('Success', 'Profile picture uploaded successfully!');
+      
+      // Call refresh callback if provided
+      if (route?.params?.onGoBack) {
+        route.params.onGoBack();
+      }
     } catch (error: any) {
       console.error("Error uploading profile picture: ", error);
       Alert.alert('Upload failed!', error.message);
@@ -104,6 +109,11 @@ export default function EditProfilePictureLogic() {
       await deleteObject(storageRef);
       setProfileImage(null);
       Alert.alert('Success', 'Profile picture deleted successfully!');
+      
+      // Call refresh callback if provided
+      if (route?.params?.onGoBack) {
+        route.params.onGoBack();
+      }
     } catch (error: any) {
       console.error("Error deleting profile picture: ", error);
       Alert.alert('Delete failed!', error.message);
