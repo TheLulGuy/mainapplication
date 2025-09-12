@@ -107,7 +107,7 @@ export default function EditProfileLogic({ navigation, route }: { navigation: an
         
         if (docId) {
             const userDoc = doc(db, 'users', docId);
-            await updateDoc(userDoc, userData);
+            await setDoc(userDoc, userData, { merge: true });
             Alert.alert("Success", "Profile updated successfully!");
             handleSave();
         } else {

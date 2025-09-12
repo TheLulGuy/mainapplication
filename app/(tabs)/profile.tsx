@@ -103,7 +103,7 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
       }
 
       // Fallback: Check Firebase Storage for user's own uploaded image
-      const profileImageRef = ref(storage, `profile-pictures/${user.uid}/profile.jpg`);
+      const profileImageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
       
       try {
         await getMetadata(profileImageRef);
@@ -115,7 +115,7 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
         setProfileImage(null);
       }
     } catch (error) {
-      console.error("Error fetching profile image: ", error);
+      console.error("Error fetching profile image from storage: ", error);
       setProfileImage(null);
     } finally {
       setImageLoading(false);

@@ -1,7 +1,8 @@
 import { Image, Alert, TouchableOpacity, SafeAreaView, Text, View, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { storage, auth } from '../../FirebaseConfig';
+import { storage, auth, db } from '../../FirebaseConfig';
 import { getDownloadURL, ref, uploadBytes, getMetadata, deleteObject } from 'firebase/storage';
+import { doc, setDoc, deleteField, updateDoc, getDoc } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { User, onAuthStateChanged } from 'firebase/auth';
 
@@ -24,7 +25,7 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
 
   const fetchProfileImage = async (userId: string) => {
     try {
-      const profileImageRef = ref(storage, `profile-pictures/${userId}/profile.jpg`);
+      const profileImageRef = ref(storage, `profile-pictures/${userId}.jpg`);
       
       // Check if profile image exists
       try {
@@ -36,7 +37,7 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
         setProfileImage(null);
       }
     } catch (error) {
-      console.error("Error fetching profile image: ", error);
+      console.error("Error fetching profile image from storage: ", error);
       setProfileImage(null);
     }
   };
@@ -76,22 +77,29 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
       const response = await fetch(image);
       const blob = await response.blob();
 
-      // Always use the same path: profile-pictures/{userId}/profile.jpg
-      const storageRef = ref(storage, `profile-pictures/${user.uid}/profile.jpg`);
+      // Store all profile pictures in a single folder using userId as filename
+      const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
       await uploadBytes(storageRef, blob);
 
       const url = await getDownloadURL(storageRef);
+      
+      // Update user's Firestore document with the profileImageURL
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        profileImageURL: url
+      }, { merge: true });
+      
       setProfileImage(url);
       setImage(null);
-      Alert.alert('Success', 'Profile picture uploaded successfully!');
+      Alert.alert('Success', 'Profile picture uploaded and saved to your account successfully!');
       
       // Call refresh callback if provided
       if (route?.params?.onGoBack) {
         route.params.onGoBack();
       }
     } catch (error: any) {
-      console.error("Error uploading profile picture: ", error);
-      Alert.alert('Upload failed!', error.message);
+      console.error("Error uploading profile picture to storage: ", error);
+      Alert.alert('Upload Failed', `Failed to upload profile picture: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -105,18 +113,30 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
 
     setDeleting(true);
     try {
-      const storageRef = ref(storage, `profile-pictures/${user.uid}/profile.jpg`);
+      const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
       await deleteObject(storageRef);
+      
+      // Remove profileImageURL from user's Firestore document (only if document exists)
+      const userDocRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userDocRef);
+      
+      if (docSnap.exists()) {
+        await updateDoc(userDocRef, {
+          profileImageURL: deleteField()
+        });
+      }
+      // If document doesn't exist, no need to remove the field
+      
       setProfileImage(null);
-      Alert.alert('Success', 'Profile picture deleted successfully!');
+      Alert.alert('Success', 'Profile picture deleted and removed from your account successfully!');
       
       // Call refresh callback if provided
       if (route?.params?.onGoBack) {
         route.params.onGoBack();
       }
     } catch (error: any) {
-      console.error("Error deleting profile picture: ", error);
-      Alert.alert('Delete failed!', error.message);
+      console.error("Error deleting profile picture from storage: ", error);
+      Alert.alert('Delete Failed', `Failed to delete profile picture: ${error.message}`);
     } finally {
       setDeleting(false);
     }
