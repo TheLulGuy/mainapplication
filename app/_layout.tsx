@@ -1,13 +1,18 @@
 import '../global.css';
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from '@react-navigation/native';
 import TabLayout from './(tabs)/_layout'; // Import your tab layout
-import Index from './index';
 import LoginScreen from './(login)/loginscreen';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { router } from 'expo-router';
+import { auth } from 'FirebaseConfig';
+
+
 
 const Stack = createNativeStackNavigator();
 
 export default function RootLayout() {
+
   return (
       <Stack.Navigator>
         {/* Index screen without tabs */}

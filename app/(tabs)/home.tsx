@@ -22,7 +22,7 @@ const Home = () => {
   return (
     <View className='flex-1 items-center justify-center'>
       <Text className='text-3xl'>Home</Text>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         className='w-3/4 bg-red-500 p-3 rounded-md mb-4 items-center'
         onPress={() => {
           // Sign out logic here
@@ -30,9 +30,9 @@ const Home = () => {
           signOut(auth);
           console.log('Successfully signed out')
         }}
-      >
-        <Text className='text-white'>Sign Out</Text>
-      </TouchableOpacity>
+      > */}
+        {/* <Text className='text-white'>Sign Out</Text> */}
+      {/* </TouchableOpacity> */}
     </View>
   )
 }

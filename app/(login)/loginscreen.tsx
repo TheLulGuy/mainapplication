@@ -1,7 +1,7 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { auth } from 'FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { router } from 'expo-router';
 
 const LoginScreen = () => {
@@ -34,6 +34,16 @@ const LoginScreen = () => {
       alert('Sign up failed: ' + error.message);
     }
   }
+  
+  //! If the user is logged in, navigate to the home screen
+  useEffect(() => {
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        router.replace('/(tabs)/home');
+      }
+    });
+  }, []);
+
 
   return (
     <View className='flex-1 items-center justify-center'>
