@@ -49,7 +49,7 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       aspect: [1, 1], // Square aspect ratio for profile pictures
       quality: 0.8,
@@ -153,16 +153,18 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
         <View className='items-center mb-8'>
           {profileImage ? (
             <Image 
+              key="profile-image"
               source={{ uri: profileImage }} 
               className='w-48 h-48 rounded-full mb-6 border-4 border-white shadow-xl shadow-gray-400'
             />
           ) : image ? (
             <Image 
+              key="selected-image"
               source={{ uri: image }} 
               className='w-48 h-48 rounded-full mb-6 border-4 border-gray-200'
             />
           ) : (
-            <View className='w-48 h-48 rounded-full bg-gray-200 mb-6 items-center justify-center border-4 border-gray-300'>
+            <View key="no-image-placeholder" className='w-48 h-48 rounded-full bg-gray-200 mb-6 items-center justify-center border-4 border-gray-300'>
               <Text className='text-gray-500 text-lg text-center'>
                 No profile picture{'\n'}selected
               </Text>

@@ -9,7 +9,7 @@ import Animated, {
   FadeOut,
   LinearTransition,
 } from "react-native-reanimated";
-import React = require("react");
+import React from "react";
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -56,7 +56,7 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
             onPress={onPress}
             style={[
               styles.tabItem,
-              { backgroundColor: isFocused ? SECONDARY_COLOR : "transparent" },
+              { backgroundColor: isFocused ? "#ffffff" : "transparent" },
             ]}
           >
             {getIconByRouteName(

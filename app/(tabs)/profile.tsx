@@ -200,16 +200,17 @@ function ProfileScreenLogic({ navigation }: { navigation: any }) {
           <View className='items-center mb-6'>
             <TouchableOpacity onPress={handleEditProfileImage} className='items-center'>
               {imageLoading ? (
-                <View className='w-20 h-20 bg-gray-200 rounded-full items-center justify-center mb-3'>
+                <View key="loading-avatar" className='w-20 h-20 bg-gray-200 rounded-full items-center justify-center mb-3'>
                   <ActivityIndicator size="small" color="#3b82f6" />
                 </View>
               ) : profileImage ? (
                 <Image 
+                  key="profile-avatar"
                   source={{ uri: profileImage }} 
                   className='w-20 h-20 rounded-full mb-3 border-4 border-white shadow-lg'
                 />
               ) : (
-                <View className='w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-3'>
+                <View key="initials-avatar" className='w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-3'>
                   <Text className='text-white text-3xl font-bold'>
                     {getInitials(userData?.name)}
                   </Text>
