@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import { auth, db } from '../../FirebaseConfig'
 import { getAuth, signOut } from 'firebase/auth'
 import { router } from 'expo-router'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, addDoc, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 import { Ionicons } from '@expo/vector-icons'
 import Swiper from 'react-native-deck-swiper'
 
@@ -149,16 +149,137 @@ const Home = () => {
     );
   };
 
-  const onSwipedLeft = (cardIndex: number) => {
-    console.log('Swiped LEFT (Pass) on:', users[cardIndex]?.name);
+  // Swipe handling functions with database storage
+  const onSwipedLeft = async (cardIndex: number) => {
+    const swipedUser = users[cardIndex];
+    if (!swipedUser || !currentUser) return;
+    
+    console.log('Swiped LEFT (Pass) on:', swipedUser.name);
+    
+    try {
+      // Store the rejection in database
+      await addDoc(collection(db, 'swipes'), {
+        swiperId: currentUser.uid,
+        swipedUserId: swipedUser.id,
+        action: 'left', // rejection
+        timestamp: new Date(),
+        swiperName: currentUser.displayName || currentUser.email,
+        swipedUserName: swipedUser.name
+      });
+      
+      console.log('Left swipe stored successfully');
+    } catch (error) {
+      console.error('Error storing left swipe:', error);
+    }
   };
 
-  const onSwipedRight = (cardIndex: number) => {
-    console.log('Swiped RIGHT (Like) on:', users[cardIndex]?.name);
+  const onSwipedRight = async (cardIndex: number) => {
+    const swipedUser = users[cardIndex];
+    if (!swipedUser || !currentUser) return;
+    
+    console.log('Swiped RIGHT (Like) on:', swipedUser.name);
+    
+    try {
+      // Store the like in database
+      await addDoc(collection(db, 'swipes'), {
+        swiperId: currentUser.uid,
+        swipedUserId: swipedUser.id,
+        action: 'right', // like
+        timestamp: new Date(),
+        swiperName: currentUser.displayName || currentUser.email,
+        swipedUserName: swipedUser.name
+      });
+      
+      // Check if this creates a match
+      await checkForMatch(currentUser.uid, swipedUser.id, currentUser.displayName || currentUser.email, swipedUser.name);
+      
+      console.log('Right swipe stored successfully');
+    } catch (error) {
+      console.error('Error storing right swipe:', error);
+    }
   };
 
-  const onSwipedTop = (cardIndex: number) => {
-    console.log('Swiped UP (Super Like) on:', users[cardIndex]?.name);
+  const onSwipedTop = async (cardIndex: number) => {
+    const swipedUser = users[cardIndex];
+    if (!swipedUser || !currentUser) return;
+    
+    console.log('Swiped UP (Super Like) on:', swipedUser.name);
+    
+    try {
+      // Store the super like in database
+      await addDoc(collection(db, 'swipes'), {
+        swiperId: currentUser.uid,
+        swipedUserId: swipedUser.id,
+        action: 'super', // super like
+        timestamp: new Date(),
+        swiperName: currentUser.displayName || currentUser.email,
+        swipedUserName: swipedUser.name
+      });
+      
+      // Check if this creates a match (super like always shows interest)
+      await checkForMatch(currentUser.uid, swipedUser.id, currentUser.displayName || currentUser.email, swipedUser.name);
+      
+      console.log('Super like stored successfully');
+    } catch (error) {
+      console.error('Error storing super like:', error);
+    }
+  };
+
+  // Check if a mutual match has occurred
+  const checkForMatch = async (swiperId: string, swipedUserId: string, swiperName: string, swipedUserName: string) => {
+    try {
+      // Query to see if the swiped user has also swiped right on the swiper
+      const mutualSwipeQuery = query(
+        collection(db, 'swipes'),
+        where('swiperId', '==', swipedUserId),
+        where('swipedUserId', '==', swiperId),
+        where('action', 'in', ['right', 'super'])
+      );
+      
+      const mutualSwipeSnapshot = await getDocs(mutualSwipeQuery);
+      
+      if (!mutualSwipeSnapshot.empty) {
+        // It's a match! Create match document
+        const matchId = `${swiperId}_${swipedUserId}`;
+        const reverseMatchId = `${swipedUserId}_${swiperId}`;
+        
+        // Check if match already exists
+        const existingMatch = await getDoc(doc(db, 'matches', matchId));
+        const existingReverseMatch = await getDoc(doc(db, 'matches', reverseMatchId));
+        
+        if (!existingMatch.exists() && !existingReverseMatch.exists()) {
+          // Create new match
+          await setDoc(doc(db, 'matches', matchId), {
+            user1Id: swiperId,
+            user2Id: swipedUserId,
+            user1Name: swiperName,
+            user2Name: swipedUserName,
+            matchDate: new Date(),
+            conversationId: matchId
+          });
+          
+          // Create conversation document
+          await setDoc(doc(db, 'conversations', matchId), {
+            participants: [swiperId, swipedUserId],
+            participantNames: [swiperName, swipedUserName],
+            lastMessage: '',
+            lastMessageTime: new Date(),
+            messages: []
+          });
+          
+          // Show match notification
+          Alert.alert(
+            '🎉 It\'s a Match!',
+            `You and ${swipedUserName} liked each other! Start chatting now.`,
+            [{ text: 'Great!', style: 'default' }]
+          );
+          
+          console.log('Match created between:', swiperName, 'and', swipedUserName);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for match:', error);
+    }
   };
 
   const onSwipedBottom = (cardIndex: number) => {
@@ -465,7 +586,10 @@ const Home = () => {
               shadowRadius: 6,
               elevation: 6,
             }}
-            onPress={() => swiperRef.current?.swipeLeft()}
+            onPress={() => {
+              onSwipedLeft(cardIndex);
+              swiperRef.current?.swipeLeft();
+            }}
           >
             <Ionicons name="close" size={28} color="white" />
           </TouchableOpacity>
@@ -497,7 +621,10 @@ const Home = () => {
               shadowRadius: 6,
               elevation: 6,
             }}
-            onPress={() => swiperRef.current?.swipeTop()}
+            onPress={() => {
+              onSwipedTop(cardIndex);
+              swiperRef.current?.swipeTop();
+            }}
           >
             <Ionicons name="star" size={24} color="white" />
           </TouchableOpacity>
@@ -511,7 +638,10 @@ const Home = () => {
               shadowRadius: 6,
               elevation: 6,
             }}
-            onPress={() => swiperRef.current?.swipeRight()}
+            onPress={() => {
+              onSwipedRight(cardIndex);
+              swiperRef.current?.swipeRight();
+            }}
           >
             <Ionicons name="heart" size={28} color="white" />
           </TouchableOpacity>
@@ -594,7 +724,12 @@ const Home = () => {
                     className="bg-red-500 rounded-full p-4 flex-1 mx-2"
                     onPress={() => {
                       hideUserModal();
-                      swiperRef.current?.swipeLeft();
+                      // Find the current user's index for proper swipe handling
+                      const userIndex = users.findIndex(u => u.id === modalUser?.id);
+                      if (userIndex !== -1) {
+                        onSwipedLeft(userIndex);
+                        swiperRef.current?.swipeLeft();
+                      }
                     }}
                   >
                     <View className="items-center">
@@ -607,7 +742,12 @@ const Home = () => {
                     className="bg-blue-500 rounded-full p-4 flex-1 mx-2"
                     onPress={() => {
                       hideUserModal();
-                      swiperRef.current?.swipeTop();
+                      // Find the current user's index for proper swipe handling
+                      const userIndex = users.findIndex(u => u.id === modalUser?.id);
+                      if (userIndex !== -1) {
+                        onSwipedTop(userIndex);
+                        swiperRef.current?.swipeTop();
+                      }
                     }}
                   >
                     <View className="items-center">
@@ -620,7 +760,12 @@ const Home = () => {
                     className="bg-green-500 rounded-full p-4 flex-1 mx-2"
                     onPress={() => {
                       hideUserModal();
-                      swiperRef.current?.swipeRight();
+                      // Find the current user's index for proper swipe handling
+                      const userIndex = users.findIndex(u => u.id === modalUser?.id);
+                      if (userIndex !== -1) {
+                        onSwipedRight(userIndex);
+                        swiperRef.current?.swipeRight();
+                      }
                     }}
                   >
                     <View className="items-center">
