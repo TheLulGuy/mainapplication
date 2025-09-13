@@ -29,25 +29,12 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "host.exp.exponent",
-      "googleServicesFile": "./google-services.json",
+      "package": "host.exp.exponent", 
+      "googleServicesFile": "./google-services.json", 
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "96208264-bfee-4eab-8238-8848032efab9"
-      }
-    },
-    "owner": "ombanerjee",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/96208264-bfee-4eab-8238-8848032efab9"
     }
   }
 }
