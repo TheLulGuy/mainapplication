@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -23,7 +23,7 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
   navigation,
 }) => {
   return (
-    <View style={styles.container}>
+    <View className="absolute left-0 right-0 bottom-0 flex-row justify-center items-center bg-[#130057] w-full rounded-t-[30px] px-3 py-4 shadow-lg">
       {state.routes.map((route, index) => {
         if (["_sitemap", "+not-found"].includes(route.name)) return null;
 
@@ -54,10 +54,16 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
             layout={LinearTransition.springify().mass(0.5)}
             key={route.key}
             onPress={onPress}
-            style={[
-              styles.tabItem,
-              { backgroundColor: isFocused ? "#ffffff" : "transparent" },
-            ]}
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              height: 36,
+              paddingHorizontal: 13,
+              paddingVertical: 6,
+              borderRadius: 30,
+              backgroundColor: isFocused ? "#ffffff" : "transparent",
+            }}
           >
             {getIconByRouteName(
               route.name,
@@ -67,7 +73,7 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
               <Animated.Text
                 entering={FadeIn.duration(200)}
                 exiting={FadeOut.duration(200)}
-                style={styles.text}
+                className="text-[#130057] ml-2 font-medium"
               >
                 {label as string}
               </Animated.Text>
@@ -83,7 +89,7 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
       case "Index":
         return <Feather name="home" size={18} color={color} />;
       case "Search":
-        return <AntDesign name="search1" size={18} color={color} />;
+        return <AntDesign name="search" size={18} color={color} />;
       case "Analytics":
         return <Feather name="pie-chart" size={18} color={color} />;
       case "Wallet":
@@ -97,43 +103,5 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
     }
   }
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: PRIMARY_COLOR,
-    width: "100%",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 10,
-  },
-  tabItem: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    height: 36,
-    paddingHorizontal: 13,
-    borderRadius: 30,
-  },
-  text: {
-    color: PRIMARY_COLOR,
-    marginLeft: 8,
-    fontWeight: "500",
-  },
-});
 
 export default CustomNavBar;
