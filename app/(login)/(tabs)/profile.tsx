@@ -4,7 +4,7 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
-import { profileData } from "../../constants";
+import { profileData } from "../../../constants";
 
 export default function ProfileScreen() {
   const data = profileData[0];

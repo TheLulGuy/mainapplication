@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import CustomNavBar from "../../components/CustomNavBar";
+import CustomNavBar from "../../../components/CustomNavBar";
 import Home from "./home";
 import Messages from "./messages";
 import Profile from "./profile";

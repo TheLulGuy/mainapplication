@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
-import { auth } from 'FirebaseConfig'
+import { auth } from '../../../FirebaseConfig'
 import { getAuth, signOut } from 'firebase/auth'
 import { router } from 'expo-router'
 // signOut

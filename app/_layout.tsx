@@ -1,7 +1,7 @@
 import '../global.css';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from '@react-navigation/native';
-import TabLayout from './(tabs)/_layout'; // Import your tab layout
+import TabLayout from './(login)/(tabs)/_layout'; // Import your tab layout
 import Index from './index';
 import LoginScreen from './(login)/loginscreen';
 

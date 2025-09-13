@@ -6,7 +6,7 @@ import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoid
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { chatData } from '../../constants';
+import { chatData } from '../../../constants';
 
 // --- Types ---
 // ChatMessage: single message in a chat
