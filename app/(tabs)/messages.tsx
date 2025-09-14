@@ -2,7 +2,7 @@
 // Contains: MessagesList (chat overview), ChatScreen (chat window), Stack navigator
 // Uses: Firebase for real conversations, Ionicons for icons, Native stack navigation
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Image, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, Animated } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -45,6 +45,7 @@ const ChatScreen = ({ route, navigation }: any) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [keyboardHeight] = useState(new Animated.Value(0));
   const flatListRef = React.useRef<FlatList<ChatMessage>>(null);
 
   useEffect(() => {
@@ -67,7 +68,40 @@ const ChatScreen = ({ route, navigation }: any) => {
       }
     });
 
-    return () => unsubscribe();
+    // Keyboard event listeners for smooth animation
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 250,
+          useNativeDriver: false,
+        }).start();
+        // Scroll to bottom when keyboard appears
+        setTimeout(() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }
+        }, 100);
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 250,
+          useNativeDriver: false,
+        }).start();
+      }
+    );
+
+    return () => {
+      unsubscribe();
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
   }, [conversationId]);
 
   // Send message handler
@@ -99,11 +133,7 @@ const ChatScreen = ({ route, navigation }: any) => {
 
   // UI: header (back, partnerName), messages list, input bar
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-white pt-10 pb-20"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
-    >
+    <View className="flex-1 bg-white pt-10">
       {/* Header: back button, chat name */}
       <View className="flex-row items-center px-6 mb-6">
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -114,44 +144,74 @@ const ChatScreen = ({ route, navigation }: any) => {
           <Text className="text-white font-bold text-lg">{partnerName?.charAt(0)}</Text>
         </View>
       </View>
-      {/* Messages list */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const isMe = currentUser && item.senderId === currentUser.uid;
-          return (
-            <View className={`mb-4 px-6 ${isMe ? 'items-end' : 'items-start'}`}>
-              <View className={`rounded-2xl px-6 py-4 ${isMe ? 'bg-blue-500' : 'bg-gray-200'}`}>
-                <Text className={`${isMe ? 'text-white' : 'text-gray-800'} text-lg`}>{item.message}</Text>
-              </View>
-              <Text className="text-xs text-gray-400 mt-1">
-                {item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-              </Text>
-            </View>
-          );
+
+      {/* Messages container with animated bottom padding */}
+      <Animated.View 
+        className="flex-1"
+        style={{ 
+          paddingBottom: Animated.add(keyboardHeight, 140) // 80px for tab bar + 60px for message input
         }}
-        style={{ flex: 1 }}
-      />
-      {/* Input bar for sending messages */}
-      <View className="flex-row items-center px-6 pb-6">
-        <TextInput
-          className="flex-1 border border-gray-300 rounded-full px-4 py-3 text-lg mr-3 bg-gray-100"
-          placeholder="Type a message..."
-          value={input}
-          onChangeText={setInput}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
+      >
+        {/* Messages list */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => {
+            const isMe = currentUser && item.senderId === currentUser.uid;
+            return (
+              <View className={`mb-4 px-6 ${isMe ? 'items-end' : 'items-start'}`}>
+                <View className={`rounded-2xl px-6 py-4 max-w-[80%] ${isMe ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                  <Text className={`${isMe ? 'text-white' : 'text-gray-800'} text-lg`}>{item.message}</Text>
+                </View>
+                <Text className="text-xs text-gray-400 mt-1">
+                  {item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </Text>
+              </View>
+            );
+          }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
-        <TouchableOpacity
-          className="bg-blue-500 px-6 py-3 rounded-full items-center justify-center"
-          onPress={handleSend}
+
+        {/* Input bar - positioned above keyboard and tab bar */}
+        <Animated.View 
+          className="flex-row items-center px-6 py-4 bg-white border-t border-gray-200"
+          style={{ 
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'white',
+            marginBottom: 80, // Space for tab bar (tab bar height ~80px)
+            transform: [{
+              translateY: keyboardHeight.interpolate({
+                inputRange: [0, 300],
+                outputRange: [0, -80], // Move up by tab bar height when keyboard shows
+                extrapolate: 'clamp',
+              })
+            }]
+          }}
         >
-          <Ionicons name="send" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <TextInput
+            className="flex-1 border border-gray-300 rounded-full px-4 py-3 text-lg mr-3 bg-gray-100"
+            placeholder="Type a message..."
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            multiline={false}
+            blurOnSubmit={false}
+          />
+          <TouchableOpacity
+            className="bg-blue-500 px-6 py-3 rounded-full items-center justify-center"
+            onPress={handleSend}
+          >
+            <Ionicons name="send" size={22} color="#fff" />
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 };
 
