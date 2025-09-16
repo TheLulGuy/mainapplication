@@ -444,8 +444,8 @@ const Home = () => {
         </View>
       </View>
 
-      {/* Card Stack */}
-      <View className="flex-1 pt-3 pb-5">
+      {/* Card Stack - Extended to full height */}
+      <View className="flex-1" style={{ marginTop: -50 }}>
         {users.length > 0 ? (
           <Swiper
             ref={swiperRef}
@@ -574,17 +574,25 @@ const Home = () => {
         )}
       </View>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Positioned above navigation bar */}
       {users.length > 0 && (
-        <View className="flex-row justify-center items-center pb-5 pt-1 px-10 bg-gray-50">
+        <View 
+          className="absolute bottom-0 left-0 right-0 flex-row justify-center items-center px-10"
+          style={{
+            paddingBottom: 95, // Space above nav bar (nav bar height ~80px + 15px margin)
+            paddingTop: 15,
+            backgroundColor: 'rgba(249, 250, 251, 0.95)', // Semi-transparent gray-50
+            zIndex: 999, // Below nav bar but above content
+          }}
+        >
           <TouchableOpacity 
-            className="bg-red-500 rounded-full p-4 mx-3 shadow-lg"
+            className="bg-red-500 rounded-full p-4 mx-3"
             style={{
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-              elevation: 6,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 8,
             }}
             onPress={() => {
               onSwipedLeft(cardIndex);
@@ -595,13 +603,13 @@ const Home = () => {
           </TouchableOpacity>
           
           <TouchableOpacity 
-            className="bg-purple-500 rounded-full p-4 mx-3 shadow-lg"
+            className="bg-purple-500 rounded-full p-4 mx-3"
             style={{
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-              elevation: 6,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 8,
             }}
             onPress={() => {
               if (users[cardIndex]) {
@@ -613,13 +621,13 @@ const Home = () => {
           </TouchableOpacity>
           
           <TouchableOpacity 
-            className="bg-blue-500 rounded-full p-3 mx-3 shadow-lg"
+            className="bg-blue-500 rounded-full p-3 mx-3"
             style={{
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-              elevation: 6,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 8,
             }}
             onPress={() => {
               onSwipedTop(cardIndex);
@@ -630,13 +638,13 @@ const Home = () => {
           </TouchableOpacity>
           
           <TouchableOpacity 
-            className="bg-green-500 rounded-full p-4 mx-3 shadow-lg"
+            className="bg-green-500 rounded-full p-4 mx-3"
             style={{
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-              elevation: 6,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 8,
             }}
             onPress={() => {
               onSwipedRight(cardIndex);
