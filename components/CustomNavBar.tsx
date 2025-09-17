@@ -1,15 +1,14 @@
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Image, Text } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import Feather from "@expo/vector-icons/Feather";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { Feather, FontAwesome6, AntDesign, Ionicons, FontAwesome } from "@expo/vector-icons";
 import Animated, {
   FadeIn,
   FadeOut,
   LinearTransition,
 } from "react-native-reanimated";
-import React = require("react");
+import React, { useState, useEffect } from "react";
+import { auth, db } from "../FirebaseConfig";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -22,6 +21,74 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
   descriptors,
   navigation,
 }) => {
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      // Listen to user's profile data changes
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          setUserProfileImage(userData.profileImageURL || null);
+          setUserName(userData.name || user.displayName || user.email || "User");
+        }
+      });
+
+      return unsubscribe;
+    }
+  }, []);
+
+  const ProfileIcon = ({ color, size = 18 }: { color: string; size?: number }) => {
+    if (userProfileImage) {
+      return (
+        <Image 
+          source={{ uri: userProfileImage }} 
+          style={{ 
+            width: size + 4, 
+            height: size + 4, 
+            borderRadius: (size + 4) / 2,
+            borderWidth: 1,
+            borderColor: color === "#130057" ? "#130057" : "transparent"
+          }}
+        />
+      );
+    } else if (userName) {
+      const initials = userName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      
+      return (
+        <View 
+          style={{
+            width: size + 4,
+            height: size + 4,
+            borderRadius: (size + 4) / 2,
+            backgroundColor: color === "#130057" ? "#130057" : "rgba(255, 255, 255, 0.3)",
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: color === "#130057" ? "#fff" : color
+          }}
+        >
+          <Text style={{ 
+            color: color === "#130057" ? "#fff" : color, 
+            fontSize: (size + 4) * 0.4, 
+            fontWeight: 'bold' 
+          }}>
+            {initials}
+          </Text>
+        </View>
+      );
+    } else {
+      return <FontAwesome6 name="circle-user" size={size} color={color} />;
+    }
+  };
   return (
     <View style={styles.container}>
       {state.routes.map((route, index) => {
@@ -79,21 +146,17 @@ const CustomNavBar: React.FC<BottomTabBarProps> = ({
   );
 
   function getIconByRouteName(routeName: string, color: string) {
+    console.log("Route name:", routeName); // Debug log
     switch (routeName) {
-      case "Index":
+      case "Home":
         return <Feather name="home" size={18} color={color} />;
-      case "Search":
-        return <AntDesign name="search1" size={18} color={color} />;
-      case "Analytics":
-        return <Feather name="pie-chart" size={18} color={color} />;
-      case "Wallet":
-        return <Ionicons name="wallet-outline" size={18} color={color} />;
       case "Messages":
         return <Feather name="message-circle" size={18} color={color} />;
       case "Profile":
-        return <FontAwesome6 name="circle-user" size={18} color={color} />;
+        return <ProfileIcon color={color} size={18} />;
       default:
-        return <Feather name="home" size={18} color={color} />;
+        console.log("Using default icon for route:", routeName); // Debug log
+        return <Feather name="help-circle" size={18} color={color} />;
     }
   }
 };

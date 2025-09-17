@@ -242,10 +242,19 @@ const MessagesList: React.FC = () => {
       const usersSnapshot = await getDocs(usersCollection);
       
       const usersList: any[] = [];
+      const seenUserIds = new Set<string>(); // Track unique users
+      
       usersSnapshot.forEach((doc) => {
         const data = doc.data();
-        // Exclude current user from the list
-        if (data.userId !== currentUserId) {
+        
+        // Exclude current user and validate required fields
+        if (data.userId !== currentUserId && 
+            data.name && 
+            data.name.trim() !== '' && 
+            data.userId && 
+            !seenUserIds.has(data.userId)) {
+          
+          seenUserIds.add(data.userId);
           usersList.push({
             id: doc.id,
             ...data
@@ -253,7 +262,7 @@ const MessagesList: React.FC = () => {
         }
       });
       
-      console.log('Fetched users for messaging:', usersList.length);
+      console.log('Fetched valid users for messaging:', usersList.length);
       setUsers(usersList);
     } catch (error) {
       console.error('Error fetching users:', error);
