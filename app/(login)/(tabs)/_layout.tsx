@@ -4,6 +4,7 @@ import CustomNavBar from "../../../components/CustomNavBar";
 import Home from "./home";
 import Messages from "./messages";
 import Profile from "./profile";
+// import Database from "./editprofile";
 
 const Tab = createBottomTabNavigator();
 

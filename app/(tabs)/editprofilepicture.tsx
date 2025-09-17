@@ -83,11 +83,24 @@ export default function EditProfilePictureLogic({ navigation, route }: { navigat
 
       const url = await getDownloadURL(storageRef);
       
-      // Update user's Firestore document with the profileImageURL
+      // Find existing user document instead of creating new one
       const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, {
-        profileImageURL: url
-      }, { merge: true });
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        // Update existing document
+        await updateDoc(userDocRef, {
+          profileImageURL: url
+        });
+      } else {
+        // Create new document only if none exists (but this shouldn't happen in normal flow)
+        await setDoc(userDocRef, {
+          profileImageURL: url,
+          userId: user.uid,
+          email: user.email,
+          lastUpdated: new Date()
+        });
+      }
       
       setProfileImage(url);
       setImage(null);
